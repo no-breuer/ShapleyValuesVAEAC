@@ -120,6 +120,11 @@ class VAEAC(Module):
         # (mu, sigma) from the prior_network
         prior = normal_parse_params(prior_params, 1e-3)
 
+        # prior is the same as z_fake in DEAR
+        #TODO: I think we have to add here the causal layer where the priors are "updated" according the A
+        # call it prior_ or something
+
+
         # Return the two multivariate normal distributions.
         return proposal, prior
 
