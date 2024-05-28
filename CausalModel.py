@@ -3,6 +3,97 @@ from torch import nn
 import numpy as np
 
 
+class InvertiblePriorLinear(nn.Module):
+    """docstring for InvertiblePrior"""
+
+    def __init__(self):
+        super(InvertiblePriorLinear, self).__init__()
+        self.p = nn.Parameter(torch.rand([2]))
+
+    def forward(self, eps):
+        print("i am computing o in invertible prior lineaer")
+        o = self.p[0] * eps + self.p[1]
+        return o
+
+    def inverse(self, o):
+        eps = (o - self.p[1]) / self.p[0]
+        print("inverse path eps")
+        print(eps.size())
+        return eps
+
+
+class InvertiblePWL(nn.Module):
+    """docstring for InvertiblePrior"""
+
+    def __init__(self, vmin=-5, vmax=5, n=100, use_bias=True):
+        super(InvertiblePWL, self).__init__()
+        self.p = nn.Parameter(torch.randn([n + 1]) / 5)
+        self.int_length = (vmax - vmin) / (n - 1)
+
+        self.n = n
+        if use_bias:
+            self.b = nn.Parameter(torch.randn([1]) + vmin)
+        else:
+            self.b = vmin
+        self.points = nn.Parameter(torch.from_numpy(np.linspace(vmin, vmax, n).astype('float32')).view(1, n),
+                                   requires_grad=False)
+
+    def to_positive(self, x):
+        return torch.exp(x) + 1e-3
+
+    def forward(self, eps):
+        delta_h = self.int_length * self.to_positive(self.p[1:self.n]).detach()
+        delta_bias = torch.zeros([self.n]).to(eps.device)
+
+        delta_bias[0] = self.b
+        for i in range(self.n - 1):
+            delta_bias[i + 1] = delta_bias[i] + delta_h[i]
+        index = torch.sum(((eps - self.points) >= 0).long(), 1).detach()  # b * 1 from 0 to n
+
+        start_points = index - 1
+        start_points[start_points < 0] = 0
+        delta_bias = delta_bias[start_points]
+        start_points = torch.squeeze(self.points)[torch.squeeze(start_points)].detach()
+        delta_x = eps - start_points.view(-1, 1)
+
+        k = self.to_positive(self.p[index])
+        delta_fx = delta_x * k.view(-1, 1)
+
+        o = delta_fx + delta_bias.view(-1, 1)
+
+        return o
+
+    def inverse(self, o):
+        delta_h = self.int_length * self.to_positive(self.p[1:self.n]).detach()
+        delta_bias = torch.zeros([self.n]).to(o.device)
+        delta_bias[0] = self.b
+        for i in range(self.n - 1):
+            delta_bias[i + 1] = delta_bias[i] + delta_h[i]
+        index = torch.sum(((o - delta_bias) >= 0).long(), 1).detach()  # b * 1 from 0 to n
+        start_points = index - 1
+        start_points[start_points < 0] = 0
+        delta_bias = delta_bias[start_points]
+        intervel_incre = o - delta_bias.view(-1, 1)
+        start_points = torch.squeeze(self.points)[torch.squeeze(start_points)].detach()
+        k = self.to_positive(self.p[index])
+        delta_x = intervel_incre / k.view(-1, 1)
+        eps = delta_x + start_points.view(-1, 1)
+        return eps
+
+
+class InvertiblePriorInv(nn.Module):
+    """docstring for InvertiblePrior"""
+
+    def __init__(self, prior):
+        super(InvertiblePriorInv, self).__init__()
+        self.prior = prior
+
+    def forward(self, o):
+        return self.prior.inverse(o)
+
+    def inverse(self, eps):
+        return self.prior(eps)
+
 class SCM(nn.Module):
     def __init__(self, d, A=None, scm_type='mlp'):
         super().__init__()
