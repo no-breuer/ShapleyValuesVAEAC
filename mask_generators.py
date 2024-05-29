@@ -128,3 +128,6 @@ class SpecifiedProbabilityGenerator:
         mask = torch.max(random_mask, nan_mask)  # logical or
         return mask
 
+
+class ImageMaskGenerator:
+    pass
