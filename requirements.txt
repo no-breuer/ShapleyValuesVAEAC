@@ -13,3 +13,4 @@ R (4.0.2):
 reticulate==1.18
 abind==1.4-5
 shapr==0.2.0
+yaml

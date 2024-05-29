@@ -7,15 +7,19 @@ library(shapr)
 # Library needed for doing data manipulations
 library(abind)
 
+library(yaml)
+
+user_config <- yaml.load_file("user_config.yaml")
+
 # User need to specify the path of the folder where
 # the user downloaded the GitHub Repository.
 # In RStudio one can use 'dirname(rstudioapi::getSourceEditorContext()$path)'.
-directory_code = "USER_MUST_SET_PATH_TO_DIRECTORY_WHERE_GitHub_REPOSITORY_IS_STORED"
+directory_code <- user_config$directory_code
 
 # The path to where the python build is saved.
 # Often something along "/usr/local/bin/python3.6.4",
 # depending on operating system.
-directory_python = "USER_MUST_SET_PATH_TO_DIRECTORY_WHERE_PYTHON_IS_STORED"
+directory_python <- user_config$directory_python
 
 ###############################################################
 ##### INITIATE CONNECTION TO PYTHON BY RETICULATE LIBRARY #####
