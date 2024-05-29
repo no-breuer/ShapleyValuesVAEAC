@@ -7,7 +7,6 @@ from torchvision.transforms import CenterCrop, Compose, Normalize, ToTensor
 
 from mask_generators import ImageMaskGenerator
 
-
 def compute_normalization(data, one_hot_max_sizes):
     """
     Compute the normalization parameters (i. e. mean to subtract and std

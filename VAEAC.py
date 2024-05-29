@@ -6,6 +6,7 @@ from torch.nn import Module
 
 from prob_utils import normal_parse_params
 
+from CausalModel import *
 
 class VAEAC(Module):
     """
@@ -36,8 +37,11 @@ class VAEAC(Module):
       almost disappearing regularization, which is suitable for all
       experimental setups the model was tested on.
     """
+
+    #TODO: add into the init function here as a paramter the SCM class network
+
     def __init__(self, rec_log_prob, proposal_network, prior_network,
-                 generative_network, sigma_mu=1e4, sigma_sigma=1e-4):
+                 generative_network, sigma_mu=1e4, sigma_sigma=1e-4, prior_dist='gaussian', num_label=None, A=None):
         super().__init__()
         self.rec_log_prob = rec_log_prob
         self.proposal_network = proposal_network
@@ -45,6 +49,7 @@ class VAEAC(Module):
         self.generative_network = generative_network
         self.sigma_mu = sigma_mu
         self.sigma_sigma = sigma_sigma
+        self.scm = SCM(num_label, A, scm_type=prior_dist) # scm_type right now still hardcoded needs change
 
     def make_observed(self, batch, mask):
         """
@@ -120,13 +125,17 @@ class VAEAC(Module):
         # (mu, sigma) from the prior_network
         prior = normal_parse_params(prior_params, 1e-3)
 
-        # prior is the same as z_fake in DEAR
-        #TODO: I think we have to add here the causal layer where the priors are "updated" according the A
-        # call it prior_ or something
+        # call the scm layer but only on the relevant features on both latent distributions
+        l_z_proposal = self.scm(proposal[:, :self.num_label])  # unsure wether we need to order them so that the num_label are at the front
+        o_z_proposal = proposal[:, self.num_label:]
+        causal_proposal = torch.cat([l_z_proposal, o_z_proposal], dim=1)
 
+        l_z_prior = self.scm(prior[:, :self.num_label])
+        o_z_prior = prior[:, self.num_label:]
+        causal_prior = torch.cat([l_z_prior, o_z_prior], dim=1)
 
         # Return the two multivariate normal distributions.
-        return proposal, prior
+        return causal_proposal, causal_prior
 
     def prior_regularization(self, prior):
         """

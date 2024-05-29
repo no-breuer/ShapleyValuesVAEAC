@@ -250,12 +250,20 @@ def train_VAEAC_model(data_train,
             #print(networks, file=stderr, flush=True)
 
 
+
+
+        # TODO: define the prior causal information (here we need to add a way so that we can define A (the causal
+        #  information)) for the known labels num_label
+
+
         # Build VAEAC on top of returned network
         model = VAEAC(
             networks['reconstruction_log_prob'],
             networks['proposal_network'],
             networks['prior_network'],
-            networks['generative_network']
+            networks['generative_network'],
+            num_label,
+            A
         )
         #print([depth, width], file=stderr, flush=True)
         #print(model, file=stderr, flush=True)
@@ -268,6 +276,11 @@ def train_VAEAC_model(data_train,
         # The 1 in networks.get('vlb_scale_factor', 1) means that if
         # 'vlb_scale_factor' is not defined, return "1". This should not
         # be necessary for us.
+
+        # Load parameter for SCM optimization
+        scm_param = list(model.scm.parameters())
+        A_optimizer = optim.Adam(scm_param[0:1], lr=args.lr_a)
+        prior_optimizer = optim.Adam(scm_param[1:], lr=args.lr_p, betas=(args.beta1, args.beta2))
 
         # A list of validation IWAE estimates
         validation_iwae = []
@@ -337,6 +350,10 @@ def train_VAEAC_model(data_train,
 
                 # Update the model parameters by using ADAM.
                 optimizer.step()
+
+                # Update causal prior
+                prior_optimizer.step()
+                A_optimizer.step()
 
                 # Update running variational lower bound average
                 avg_vlb += (float(vlb) - avg_vlb) / (i + 1)
@@ -541,6 +558,8 @@ def train_VAEAC_model(data_train,
             # do backpropragation because PyTorch accumulates the gradients
             # on subsequent backward passes
             optimizer.zero_grad()
+            prior_optimizer.zero_grad()
+            A_optimizer.zero_grad()
 
             # Send the batch and mask to Nvida GPU if we have. Would be faster.
             if use_cuda:
@@ -565,6 +584,10 @@ def train_VAEAC_model(data_train,
             # based on the current gradient (stored in .grad attribute of a parameter)
             # That is, for the proposal (encoder), the generative (decoder) and prior network.
             optimizer.step()
+
+            # Update SCM prior
+            A_optimizer.step()
+            prior_optimizer.step()
 
             # update running variational lower bound average
             # a + (new - a)/(i+1) = {(i+1)a + new - a}/(i+1) = { a(i) + new}/(i+1) = a *i/(i+1) + new/(i+1)
