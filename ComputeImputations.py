@@ -253,6 +253,8 @@ def train_VAEAC_model(data_train,
         print("Done BUILDING the Encoder and Decoder Models!")
 
         print("Starting to build VAEAC:")
+        print(relevant_latents)
+        print(A)
         # Build VAEAC on top of returned network
         model = VAEAC(
             networks['reconstruction_log_prob'],

@@ -47,9 +47,6 @@ class VAEAC(Module):
         self.sigma_mu = sigma_mu
         self.sigma_sigma = sigma_sigma
         self.relevant_latents = relevant_latents
-        print("in vaeac init function")
-        print(relevant_latents)
-        print(A)
         self.scm = SCM(relevant_latents, A, scm_type=prior_dist)
 
     def make_observed(self, batch, mask):
