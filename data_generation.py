@@ -155,6 +155,7 @@ def generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_i
         nx.draw_networkx(obj, arrows=True)
         plt.savefig(base_dir + latent_case + '.jpg')
         plt.clf()
+        plt.show()
 
     return z
 
