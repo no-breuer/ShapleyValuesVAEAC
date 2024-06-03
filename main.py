@@ -8,18 +8,15 @@ from ComputeImputations import *
 if __name__ == '__main__':
 
     # generate synthethic data
-    x, z, y, A = data_generation.execute()
+    data_x, data_z, data_y, A = data_generation.execute()
 
-    print(A.shape[0])
     relevant_latents = A.shape[0]
-
-    # TODO: get the causal structure from the data A and define relevant latents
 
     # train VAEAC model
     # TODO: the train method does need some passed arguments: data_train, distribution, param_now, path_to_save_model,
     #  one_hot_max_sizes, A, relevant_latents,
 
-    #results = ComputeImputations.train_VAEAC_model()
+    results = ComputeImputations.train_VAEAC_model(data_x, A, relevant_latents)
 
     #print(results)
 
