@@ -256,6 +256,7 @@ class CategoricalToOneHotLayer(Module):
         # one_hot_max_sizes + [0] * len(one_hot_max_sizes)
         # So if we have that featuers have this many categories [1, 2, 3, 1],
         # then we get that one_hot_max_sizes = [1, 2, 3, 1, 0, 0, 0, 0]
+        one_hot_max_sizes = [1, 1, 1, 1, 1, 1]
         self.one_hot_max_sizes = one_hot_max_sizes
 
         # Is always an empty column for the prior network
@@ -354,8 +355,6 @@ class CategoricalToOneHotLayer(Module):
             # which we always do for the proposal network.
             # This only happens for the first half of the i's,
             # so for i = 0, 1, ..., num_features - 1.
-            print("this is i", i)
-            print(len(out_cols))
             if i in self.add_nans_map_for_columns:
                 # so we add the columns of nan_mask
                 out_cols.append(nan_mask.float())
