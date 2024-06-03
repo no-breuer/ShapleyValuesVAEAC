@@ -173,7 +173,7 @@ class GaussianCategoricalLoss(Module):
                 # If groundtruth dont have any nans then this line does not change anything
                 nan_mask = torch.isnan(groundtruth_col)
                 gt_col_nansafe[nan_mask] = 0
-                # Everythin that was nan is now 0.
+                # Everything that was nan is now 0.
 
                 # Mask_col masks both the nan/missing values
                 # and the artificially masked values.

@@ -24,6 +24,8 @@ class MCARGenerator:
 
         # Create a matrix of zeros (1 - self.p = 80% chance) and
         # ones (self.p = 20% chance), of the same dimension as the batch.
+        # TODO: check if this is correct or if this should not mask whole features
+        #  and not only values
         bernoulli_mask_numpy = np.random.choice(2, size=batch.shape,
                                                 p=[1 - self.p, self.p])
 
