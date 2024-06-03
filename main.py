@@ -22,8 +22,6 @@ if __name__ == '__main__':
     path_to_save_model = "unknown"
 
     # train VAEAC model
-    print("this is A")
-    print(A)
     results = ComputeImputations.train_VAEAC_model(data_x, distribution, param_now, path_to_save_model,
                                                    one_hot_max_sizes, A, relevant_latents)
 

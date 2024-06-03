@@ -253,9 +253,9 @@ def train_VAEAC_model(data_train,
         print("Done BUILDING the Encoder and Decoder Models!")
 
         print("Starting to build VAEAC:")
-        print("this is A")
-        print(A)
         # Build VAEAC on top of returned network
+        print("this is A in train VAEAC model")
+        print(A)
         model = VAEAC(
             networks['reconstruction_log_prob'],
             networks['proposal_network'],
