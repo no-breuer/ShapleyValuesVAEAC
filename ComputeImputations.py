@@ -19,6 +19,7 @@ from sys import stderr
 # %%
 import numpy as np
 import torch
+from torch import optim
 # import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from torch.nn.functional import softplus, softmax
@@ -254,8 +255,6 @@ def train_VAEAC_model(data_train,
 
         print("Starting to build VAEAC:")
         # Build VAEAC on top of returned network
-        print("this is A in train VAEAC model")
-        print(A)
         model = VAEAC(
             networks['reconstruction_log_prob'],
             networks['proposal_network'],
@@ -279,7 +278,7 @@ def train_VAEAC_model(data_train,
         # Load parameter for SCM optimization
         scm_param = list(model.scm.parameters())
         print(scm_param[0:1])
-        print(scm_param[1:0])
+        print(scm_param[1:])
         A_optimizer = optim.Adam(scm_param[0:1], lr=args.lr_a)
         prior_optimizer = optim.Adam(scm_param[1:], lr=args.lr_p, betas=(args.beta1, args.beta2))
 
