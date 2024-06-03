@@ -197,7 +197,7 @@ def execute():
     seed = 0
     data_dim = 20
     latent_dim = 4
-    latent_case = 'scm_dense'
+    latent_case = 'scm_sparse'
     poly_degree = 2
     train_size = 5000
     test_size = 5000
@@ -290,3 +290,5 @@ def execute():
 
             f= base_dir + data_case + '_' + 'y' + '.npy'
             np.save(f, y)
+
+            return x, z, y
