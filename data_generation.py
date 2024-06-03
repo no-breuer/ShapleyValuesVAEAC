@@ -160,7 +160,7 @@ def generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_i
         plt.clf()
 
 
-    return z
+    return z, adj_matrix
 
 
 # TODO: run everything on parser; above code parameters then need to be changed to arg.data_size
@@ -199,8 +199,8 @@ def execute():
     """
     # Initilaize arguments (TODO: translate into parser env)
     seed = 0
-    data_dim = 20
-    latent_dim = 4
+    data_dim = 50
+    latent_dim = 8
     latent_case = 'scm_sparse'
     poly_degree = 2
     train_size = 5000
@@ -254,11 +254,11 @@ def execute():
             # Generating the latent vector
             if distribution_case == 'observational':
                 y = -1 * np.ones(dataset_size)
-                z = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=0,
+                z, adj_matrix = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=0,
                                            intervention_indices=y, dag=dag, base_dir=base_dir)
             elif distribution_case == 'interventional':
                 y = np.argmax(np.random.multinomial(1, [1 / latent_dim] * latent_dim, dataset_size), axis=1)
-                z = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=1,
+                z, adj_matrix = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=1,
                                            intervention_indices=y, dag=dag, base_dir=base_dir)
 
             #print('Latent Z')
@@ -295,4 +295,4 @@ def execute():
             f= base_dir + data_case + '_' + 'y' + '.npy'
             np.save(f, y)
 
-            return x, z, y
+            return x, z, y, adj_matrix

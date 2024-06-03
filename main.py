@@ -8,10 +8,11 @@ from ComputeImputations import *
 if __name__ == '__main__':
 
     # generate synthethic data
-    x, z, y = data_generation.execute()
+    x, z, y, A = data_generation.execute()
 
-    print(x.shape)
-    print(x)
+    print(A.shape)
+    relevant_latents = 0
+
     # TODO: get the causal structure from the data A and define relevant latents
 
     # train VAEAC model
