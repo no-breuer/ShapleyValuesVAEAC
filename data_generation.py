@@ -152,6 +152,7 @@ def generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_i
             df, obj, adj_matrix = dag.generate()
             z = df.values[:dataset_size, :]
 
+        print("ADJ MATRIX")
         print(adj_matrix)
         nx.draw_networkx(obj, arrows=True)
         plt.show()
@@ -260,9 +261,9 @@ def execute():
                 z = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=1,
                                            intervention_indices=y, dag=dag, base_dir=base_dir)
 
-            print('Latent Z')
-            print(z.shape)
-            print(z[:5])
+            #print('Latent Z')
+            #print(z.shape)
+            #print(z[:5])
 
             #Transforming the latent via polynomial decoder to dataset
             print('Data X')
