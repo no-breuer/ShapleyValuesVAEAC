@@ -354,6 +354,7 @@ class CategoricalToOneHotLayer(Module):
             # which we always do for the proposal network.
             # This only happens for the first half of the i's,
             # so for i = 0, 1, ..., num_features - 1.
+            print("this is i", i)
             if i in self.add_nans_map_for_columns:
                 # so we add the columns of nan_mask
                 out_cols.append(nan_mask.float())
@@ -364,9 +365,6 @@ class CategoricalToOneHotLayer(Module):
         # prior net, but for proposal net, it is n x 3*num_features
         # They take the form  [batch1, is.nan1, batch2, is.nan2, …,
         # batch12, is.nan12, mask1, mask2, …, mask12]
-        output = torch.cat(out_cols, 1)
-        print(output.shape)
-        print(output)
         return torch.cat(out_cols, 1)
 
 
