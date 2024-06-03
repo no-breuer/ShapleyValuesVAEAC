@@ -355,6 +355,7 @@ class CategoricalToOneHotLayer(Module):
             # This only happens for the first half of the i's,
             # so for i = 0, 1, ..., num_features - 1.
             print("this is i", i)
+            print(out_cols.shape)
             if i in self.add_nans_map_for_columns:
                 # so we add the columns of nan_mask
                 out_cols.append(nan_mask.float())
