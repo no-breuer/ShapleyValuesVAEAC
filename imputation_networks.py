@@ -32,9 +32,8 @@ def get_imputation_networks(one_hot_max_sizes,
     """
 
     print("this one hot max sizes:", one_hot_max_sizes)
-    print(CategoricalToOneHotLayer(one_hot_max_sizes +
-                                 [0] * len(one_hot_max_sizes),
-                                 list(range(len(one_hot_max_sizes)))))
+    print(one_hot_max_sizes + [0] * len(one_hot_max_sizes),
+                                 list(range(len(one_hot_max_sizes))))
     # Proposal network
     proposal_layers = [
         # Here we do include add_nans_map_for_columns
