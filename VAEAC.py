@@ -252,6 +252,8 @@ class VAEAC(Module):
         """
         # Get two normal distributions of dimension 64, where the
         # parameters are obtained from the proposal and prior networks.
+        print(batch.shape)
+        print(mask.shape)
         proposal, prior = self.make_latent_distributions(batch, mask)
         estimates = []
         for i in range(K):
