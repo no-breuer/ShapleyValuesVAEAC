@@ -21,7 +21,8 @@ if __name__ == '__main__':
     param_now = "unkown"
 
     # train VAEAC model
-    results = ComputeImputations.train_VAEAC_model(data_x, distribution, param_now, A, relevant_latents)
+    fit = ComputeImputations()
+    results = fit.train_VAEAC_model(data_x, distribution, param_now, A, relevant_latents)
 
     #print(results)
 
