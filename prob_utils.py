@@ -302,7 +302,6 @@ class CategoricalToOneHotLayer(Module):
                 # set all the missing values to 0.
                 # SO THIS CHANGES THE INPUT VARIABLE: the full_info matrix
                 out_col[nan_mask] = 0
-                print("one hot encoding geht noch")
             else:
                 # categorical feature
                 # replace NaNs with zeros
@@ -365,6 +364,9 @@ class CategoricalToOneHotLayer(Module):
         # prior net, but for proposal net, it is n x 3*num_features
         # They take the form  [batch1, is.nan1, batch2, is.nan2, …,
         # batch12, is.nan12, mask1, mask2, …, mask12]
+        output = torch.cat(out_cols, 1)
+        print(output.shape)
+        print(output)
         return torch.cat(out_cols, 1)
 
 
