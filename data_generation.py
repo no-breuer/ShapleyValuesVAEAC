@@ -189,100 +189,104 @@ train_size= args.train_size
 test_size= args.test_size
 """
 
-# Hardcoded some parameters for test but we should use the parser from above
-seed = 0
-data_dim = 20
-latent_dim = 4
-latent_case = 'scm_dense'
-poly_degree = 2
-train_size = 5000
-test_size = 5000
+def execute():
+    """
+    Is called in main function now. Maybe later change back to no function
+    """
+    # Initilaize arguments (TODO: translate into parser env)
+    seed = 0
+    data_dim = 20
+    latent_dim = 4
+    latent_case = 'scm_dense'
+    poly_degree = 2
+    train_size = 5000
+    test_size = 5000
 
-poly_size = compute_total_polynomial_terms(poly_degree, latent_dim)
-print('Total Polynomial Terms: ', poly_size)
+    poly_size = compute_total_polynomial_terms(poly_degree, latent_dim)
+    print('Total Polynomial Terms: ', poly_size)
 
-# Random Seed
-random.seed(seed * 10)
-np.random.seed(seed * 10)
+    # Random Seed
+    random.seed(seed * 10)
+    np.random.seed(seed * 10)
 
-coff_matrix = np.random.multivariate_normal(np.zeros(poly_size), np.eye(poly_size), size=data_dim).T
-print('Coeff Matrix', coff_matrix.shape)
-_, sng_values, _ = np.linalg.svd(coff_matrix)
-print('Singular Values for Coeff Matrix: ', sng_values)
+    coff_matrix = np.random.multivariate_normal(np.zeros(poly_size), np.eye(poly_size), size=data_dim).T
+    print('Coeff Matrix', coff_matrix.shape)
+    _, sng_values, _ = np.linalg.svd(coff_matrix)
+    print('Singular Values for Coeff Matrix: ', sng_values)
 
-# DAG
-# NOTE: For this configuration to work we need to have the same train and test size
-# Generates DAG from which the latent z values will be created
-if latent_case == 'scm_sparse':
-    dag = DagGenerator('linear', cause='gaussian', nodes=latent_dim, npoints=max(train_size, test_size),
-                       expected_density=0.5)
-elif latent_case == 'scm_dense':
-    dag = DagGenerator('linear', cause='gaussian', nodes=latent_dim, npoints=max(train_size, test_size),
-                       expected_density=1.0)
-else:
-    dag = None
+    # DAG
+    # NOTE: For this configuration to work we need to have the same train and test size
+    # Generates DAG from which the latent z values will be created
+    if latent_case == 'scm_sparse':
+        dag = DagGenerator('linear', cause='gaussian', nodes=latent_dim, npoints=max(train_size, test_size),
+                           expected_density=0.5)
+    elif latent_case == 'scm_dense':
+        dag = DagGenerator('linear', cause='gaussian', nodes=latent_dim, npoints=max(train_size, test_size),
+                           expected_density=1.0)
+    else:
+        dag = None
 
-for distribution_case in ['observational', 'interventional']:
-    for data_case in ['train', 'val', 'test']:
+    for distribution_case in ['observational', 'interventional']:
+        for data_case in ['train', 'val', 'test']:
 
-        if distribution_case == 'observational':
-            base_dir = 'data/datasets/' + 'seed_' + str(seed) + '/observation/'
-        elif distribution_case == 'interventional':
-            base_dir = 'data/datasets/' + 'seed_' + str(seed) + '/intervention/'
+            if distribution_case == 'observational':
+                base_dir = 'data/datasets/' + 'seed_' + str(seed) + '/observation/'
+            elif distribution_case == 'interventional':
+                base_dir = 'data/datasets/' + 'seed_' + str(seed) + '/intervention/'
 
-        base_dir = base_dir + 'polynomial_latent_' + latent_case + '_poly_degree_' + str(
-            poly_degree) + '_data_dim_' + str(data_dim) + '_latent_dim_' + str(latent_dim) + '/'
-        if not os.path.exists(base_dir):
-            os.makedirs(base_dir)
+            base_dir = base_dir + 'polynomial_latent_' + latent_case + '_poly_degree_' + str(
+                poly_degree) + '_data_dim_' + str(data_dim) + '_latent_dim_' + str(latent_dim) + '/'
+            if not os.path.exists(base_dir):
+                os.makedirs(base_dir)
 
-        print('Data Case: ', data_case)
-        if data_case == 'train':
-            dataset_size = train_size
-        if data_case == 'val':
-            dataset_size = int(train_size / 4)
-        elif data_case == 'test':
-            dataset_size = test_size
+            print('Data Case: ', data_case)
+            if data_case == 'train':
+                dataset_size = train_size
+            if data_case == 'val':
+                dataset_size = int(train_size / 4)
+            elif data_case == 'test':
+                dataset_size = test_size
 
-        # Generating the latent vector
-        if distribution_case == 'observational':
-            y = -1 * np.ones(dataset_size)
-            z = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=0,
-                                       intervention_indices=y, dag=dag, base_dir=base_dir)
-        elif distribution_case == 'interventional':
-            y = np.argmax(np.random.multinomial(1, [1 / latent_dim] * latent_dim, dataset_size), axis=1)
-            z = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=1,
-                                       intervention_indices=y, dag=dag, base_dir=base_dir)
+            # Generating the latent vector
+            if distribution_case == 'observational':
+                y = -1 * np.ones(dataset_size)
+                z = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=0,
+                                           intervention_indices=y, dag=dag, base_dir=base_dir)
+            elif distribution_case == 'interventional':
+                y = np.argmax(np.random.multinomial(1, [1 / latent_dim] * latent_dim, dataset_size), axis=1)
+                z = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=1,
+                                           intervention_indices=y, dag=dag, base_dir=base_dir)
 
-        print('Latent Z')
-        print(z.shape)
-        print(z[:5])
+            print('Latent Z')
+            print(z.shape)
+            print(z[:5])
 
-        #Transforming the latent via polynomial decoder to dataset
-        print('Data X')
-        x=[]
-        for idx in range(z.shape[0]):
-            x.append( compute_decoder_polynomial(poly_degree, z[idx, :] ) )
-        x= np.concatenate(x, axis=0)
-        print(x.shape)
+            #Transforming the latent via polynomial decoder to dataset
+            print('Data X')
+            x=[]
+            for idx in range(z.shape[0]):
+                x.append( compute_decoder_polynomial(poly_degree, z[idx, :] ) )
+            x= np.concatenate(x, axis=0)
+            print(x.shape)
 
-        x1= np.matmul(x[:, :1+latent_dim], coff_matrix[:1+latent_dim, :])
-        print('X1')
-        print('Min', np.min(np.abs(x1)), 'Max', np.max(np.abs(x1)), 'Mean', np.mean(np.abs(x1)))
+            x1= np.matmul(x[:, :1+latent_dim], coff_matrix[:1+latent_dim, :])
+            print('X1')
+            print('Min', np.min(np.abs(x1)), 'Max', np.max(np.abs(x1)), 'Mean', np.mean(np.abs(x1)))
 
-        x2= np.matmul(x[:, 1+latent_dim:], coff_matrix[1+latent_dim:, :])
-        norm_factor= 0.5 * np.max(np.abs(x2)) / np.max(np.abs(x1))
-        x2 = x2 / norm_factor
-        print('X2')
-        print('Min', np.min(np.abs(x2)), 'Max', np.max(np.abs(x2)), 'Mean', np.mean(np.abs(x2)))
+            x2= np.matmul(x[:, 1+latent_dim:], coff_matrix[1+latent_dim:, :])
+            norm_factor= 0.5 * np.max(np.abs(x2)) / np.max(np.abs(x1))
+            x2 = x2 / norm_factor
+            print('X2')
+            print('Min', np.min(np.abs(x2)), 'Max', np.max(np.abs(x2)), 'Mean', np.mean(np.abs(x2)))
 
-        x= (x1+x2)
-        print(x.shape)
+            x= (x1+x2)
+            print(x.shape)
 
-        f= base_dir + data_case + '_' + 'x' + '.npy'
-        np.save(f, x)
+            f= base_dir + data_case + '_' + 'x' + '.npy'
+            np.save(f, x)
 
-        f= base_dir + data_case + '_' + 'z' + '.npy'
-        np.save(f, z)
+            f= base_dir + data_case + '_' + 'z' + '.npy'
+            np.save(f, z)
 
-        f= base_dir + data_case + '_' + 'y' + '.npy'
-        np.save(f, y)
+            f= base_dir + data_case + '_' + 'y' + '.npy'
+            np.save(f, y)
