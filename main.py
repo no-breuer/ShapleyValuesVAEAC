@@ -13,8 +13,8 @@ if __name__ == '__main__':
     relevant_latents = A.shape[0]
 
     # get one hot max sizes (because right now we only deal with continous varibales it is an array of ones of feature
-    # dimension
-    one_hot_max_sizes = np.ones(data_x.shape[1])
+    # dimension; THIS IS HARD CODED RIGHT NOW CHANGE TO A FUNCTION
+    one_hot_max_sizes = [1, 1, 1, 1, 1, 1]
 
     # unecessary variables for now
     distribution = "unknown_distribution"
