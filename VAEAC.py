@@ -125,13 +125,13 @@ class VAEAC(Module):
         prior = normal_parse_params(prior_params, 1e-3)
 
         # call the scm layer but only on the relevant features on both latent distributions
-        l_z_proposal = self.scm(proposal[:, :self.num_label])  # unsure wether we need to order them so that the
+        l_z_proposal = self.scm(proposal[:, :self.relevant_latents])  # unsure wether we need to order them so that the
         # num_label are at the front
-        o_z_proposal = proposal[:, self.num_label:]
+        o_z_proposal = proposal[:, self.relevant_latents:]
         causal_proposal = torch.cat([l_z_proposal, o_z_proposal], dim=1)
 
-        l_z_prior = self.scm(prior[:, :self.num_label])
-        o_z_prior = prior[:, self.num_label:]
+        l_z_prior = self.scm(prior[:, :self.relevant_latents])
+        o_z_prior = prior[:, self.relevant_latents:]
         causal_prior = torch.cat([l_z_prior, o_z_prior], dim=1)
 
         # Return the two multivariate normal distributions.
