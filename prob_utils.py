@@ -258,7 +258,6 @@ class CategoricalToOneHotLayer(Module):
         # then we get that one_hot_max_sizes = [1, 2, 3, 1, 0, 0, 0, 0]
         self.one_hot_max_sizes = one_hot_max_sizes
 
-        print(self.one_hot_max_sizes)
         # Is always an empty column for the prior network
         # while it is a list [0, 1, ..., length(one_hot_max_sizes)-1)
         # for the proposal network.
