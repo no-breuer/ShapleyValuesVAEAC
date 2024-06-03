@@ -302,6 +302,7 @@ class CategoricalToOneHotLayer(Module):
                 # set all the missing values to 0.
                 # SO THIS CHANGES THE INPUT VARIABLE: the full_info matrix
                 out_col[nan_mask] = 0
+                print("one hot encoding geht noch")
             else:
                 # categorical feature
                 # replace NaNs with zeros
