@@ -31,6 +31,7 @@ def get_imputation_networks(one_hot_max_sizes,
     optimization.   probabilities
     """
 
+    print("this is latent dim:", latent_dim)
     # Proposal network
     proposal_layers = [
         # Here we do include add_nans_map_for_columns
