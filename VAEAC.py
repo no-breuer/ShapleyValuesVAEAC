@@ -38,8 +38,11 @@ class VAEAC(Module):
       experimental setups the model was tested on.
     """
     def __init__(self, rec_log_prob, proposal_network, prior_network,
-                 generative_network, sigma_mu=1e4, sigma_sigma=1e-4, prior_dist='gaussian', relevant_latents=None, A=None):
+                 generative_network, sigma_mu=1e4, sigma_sigma=1e-4, prior_dist='gaussian', relevant_latents=None,
+                 A=None):
         super().__init__()
+        print("this is A")
+        print(A)
         self.rec_log_prob = rec_log_prob
         self.proposal_network = proposal_network
         self.prior_network = prior_network
