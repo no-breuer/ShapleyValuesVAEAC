@@ -199,8 +199,8 @@ def execute():
     """
     # Initilaize arguments (TODO: translate into parser env)
     seed = 0
-    data_dim = 25
-    latent_dim = 5
+    data_dim = 6
+    latent_dim = 3
     latent_case = 'scm_sparse'
     poly_degree = 2
     train_size = 5000
