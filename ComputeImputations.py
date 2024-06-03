@@ -277,8 +277,8 @@ def train_VAEAC_model(data_train,
 
         # Load parameter for SCM optimization
         scm_param = list(model.scm.parameters())
-        A_optimizer = optim.Adam(scm_param[0:1], lr=1e-3)
-        prior_optimizer = optim.Adam(scm_param[1:], lr=5e-5, betas=(args.beta1, args.beta2))
+        A_optimizer = optim.Adam(scm_param[0:1], lr=1e-3)  # learning rate als config file
+        prior_optimizer = optim.Adam(scm_param[1:], lr=5e-5, betas=(0.0, 0.999))  # learning rate als congif file und betas
 
         # A list of validation IWAE estimates
         validation_iwae = []
