@@ -100,6 +100,7 @@ class SCM(nn.Module):
         self.d = d
         self.A_given = A
         self.A_fix_idx = A == 0
+        print()
         self.A = nn.Parameter(torch.zeros(d, d))
 
         # Elementwise nonlinear mappings

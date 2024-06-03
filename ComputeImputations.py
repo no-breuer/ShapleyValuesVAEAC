@@ -250,8 +250,9 @@ def train_VAEAC_model(data_train,
                 mask_generator_only_these_coalitions_probabilities=mask_generator_only_these_coalitions_probabilities
             )
             #print(networks, file=stderr, flush=True)
+        print("Done BUILDING the Encoder and Decoder Models!")
 
-
+        print("Starting to build VAEAC:")
         # Build VAEAC on top of returned network
         model = VAEAC(
             networks['reconstruction_log_prob'],
