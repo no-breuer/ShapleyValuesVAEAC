@@ -39,11 +39,8 @@ class VAEAC(Module):
     """
     def __init__(self, rec_log_prob, proposal_network, prior_network,
                  generative_network, relevant_latents=None,
-                 A=None, sigma_mu=1e4, sigma_sigma=1e-4, prior_dist='gaussian'):
+                 A=None, sigma_mu=1e4, sigma_sigma=1e-4, prior='linscm'):
         super().__init__()
-        print("this is A in vaeac innit")
-        print(A)
-        print(relevant_latents)
         self.rec_log_prob = rec_log_prob
         self.proposal_network = proposal_network
         self.prior_network = prior_network
@@ -51,7 +48,7 @@ class VAEAC(Module):
         self.sigma_mu = sigma_mu
         self.sigma_sigma = sigma_sigma
         self.relevant_latents = relevant_latents
-        self.scm = SCM(relevant_latents, A, scm_type=prior_dist)
+        self.scm = SCM(relevant_latents, A, scm_type=prior)
 
     def make_observed(self, batch, mask):
         """
