@@ -12,11 +12,16 @@ if __name__ == '__main__':
 
     relevant_latents = A.shape[0]
 
-    # train VAEAC model
-    # TODO: the train method does need some passed arguments: data_train, distribution, param_now, path_to_save_model,
-    #  one_hot_max_sizes, A, relevant_latents,
+    # get one hot max sizes (because right now we only deal with continous varibales it is an array of ones of feature
+    # dimension
+    one_hot_max_sizes = np.ones(data_x.shape[1])
 
-    results = ComputeImputations.train_VAEAC_model(data_x, A, relevant_latents)
+    # unecessary variables for now
+    distribution = "unknown_distribution"
+    param_now = "unkown"
+
+    # train VAEAC model
+    results = ComputeImputations.train_VAEAC_model(data_x, distribution="unknown_distribution", param_now="unkown", A, relevant_latents)
 
     #print(results)
 
