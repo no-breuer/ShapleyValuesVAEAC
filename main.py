@@ -19,10 +19,11 @@ if __name__ == '__main__':
     # unecessary variables for now
     distribution = "unknown_distribution"
     param_now = "unkown"
+    path_to_save_model = "unknown"
 
     # train VAEAC model
-    fit = ComputeImputations()
-    results = fit.train_VAEAC_model(data_x, distribution, param_now, A, relevant_latents)
+    results = ComputeImputations.train_VAEAC_model(data_x, distribution, param_now, path_to_save_model,
+                                                   one_hot_max_sizes, A, relevant_latents)
 
     #print(results)
 
