@@ -95,9 +95,6 @@ class VAEAC(Module):
             # THIS IS A DEEP COPY
             full_info = torch.cat([batch, mask], 1)
 
-            print(batch.shape)
-            print(mask.shape)
-            print(full_info.shape)
             # Send the full_information through the proposal network
             # the encoder. It needs the full information to know if a
             # value is missing or just masked.
@@ -252,8 +249,6 @@ class VAEAC(Module):
         """
         # Get two normal distributions of dimension 64, where the
         # parameters are obtained from the proposal and prior networks.
-        print(batch.shape)
-        print(mask.shape)
         proposal, prior = self.make_latent_distributions(batch, mask)
         estimates = []
         for i in range(K):
