@@ -10,6 +10,7 @@ if __name__ == '__main__':
     # generate synthethic data
     x, z, y = data_generation.execute()
 
+    print(x.shape)
     print(x)
     # TODO: get the causal structure from the data A and define relevant latents
 
