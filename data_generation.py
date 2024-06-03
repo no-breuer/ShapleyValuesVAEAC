@@ -149,13 +149,15 @@ def generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_i
             for idx, intervene_idx in np.ndenumerate(intervention_indices):
                 z[idx, :] = latent_dict[intervene_idx][idx, :]
         else:
-            df, obj = dag.generate()
+            df, obj, adj_matrix = dag.generate()
             z = df.values[:dataset_size, :]
 
+        print(adj_matrix)
         nx.draw_networkx(obj, arrows=True)
+        plt.show()
         plt.savefig(base_dir + latent_case + '.jpg')
         plt.clf()
-        plt.show()
+
 
     return z
 

@@ -284,7 +284,7 @@ class DagGenerator:
                 self.data['V{}'.format(i)] = scale(self.data['V{}'.format(i)].values)
                 if self.positive:
                     self.data['V{}'.format(i)] -= np.min(self.data['V{}'.format(i)].values) - 1e-8
-        return self.data, self.g
+        return self.data, self.g, self.adjacency_matrix
 
 
     def choose_randomly_intervention_nodes(num_nodes=1, on_child_only=True):
@@ -364,7 +364,7 @@ class DagGenerator:
             self.generate(npoints)
         else:
             self.generate()
-        return self.data.values, self.g
+        return self.data.values, self.g, self.adjacency_matrix
 
 
     def to_csv(self, fname_radical, **kwargs):
