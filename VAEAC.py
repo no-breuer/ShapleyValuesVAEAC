@@ -137,8 +137,6 @@ class VAEAC(Module):
         o_z_prior = z_prior[:, self.relevant_latents:]
         z_causal_prior = torch.cat([l_z_prior, o_z_prior], dim=1)
 
-        print("this is z causal proposal shape")
-        print(z_causal_proposal.shape)
         # create normal.distr. again
         causal_proposal = normal_parse_params(z_causal_proposal, 1e-3)
         causal_prior = normal_parse_params(z_causal_prior, 1e-3)
@@ -258,6 +256,7 @@ class VAEAC(Module):
         """
         # Get two normal distributions of dimension 64, where the
         # parameters are obtained from the proposal and prior networks.
+        print("this is batch shape", batch.shape)
         proposal, prior = self.make_latent_distributions(batch, mask)
         estimates = []
 
