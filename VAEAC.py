@@ -123,10 +123,8 @@ class VAEAC(Module):
         # (mu, sigma) from the prior_network
         prior = normal_parse_params(prior_params, 1e-3)
 
-        z_proposal = proposal.rsample()
+        z_proposal = proposal.rsample()  # dim 64 x 3
         z_prior = prior.rsample()
-
-        print("z_proposal shape:", z_proposal.shape)
 
         # call the scm layer but only on the relevant features on both latent distributions
         l_z_proposal = self.scm(z_proposal[:, :self.relevant_latents])  # unsure wether we need to order them so that the
@@ -135,17 +133,18 @@ class VAEAC(Module):
         z_causal_proposal = torch.cat([l_z_proposal, o_z_proposal], dim=1)
 
         print("z_causal shape:", z_causal_proposal.shape)
+        print(z_causal_proposal)
+
         l_z_prior = self.scm(z_prior[:, :self.relevant_latents])
         o_z_prior = z_prior[:, self.relevant_latents:]
         z_causal_prior = torch.cat([l_z_prior, o_z_prior], dim=1)
+
 
         # create normal.distr. again
         causal_proposal = normal_parse_params(z_causal_proposal, 1e-3)
         causal_prior = normal_parse_params(z_causal_prior, 1e-3)
         # Return the two multivariate normal distributions.
 
-        sample = causal_proposal.rsample()
-        print("Sample shape:", sample.shape)
         return causal_proposal, causal_prior
 
     def prior_regularization(self, prior):
