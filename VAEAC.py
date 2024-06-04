@@ -105,7 +105,7 @@ class VAEAC(Module):
             # 64 are the softplus of the sigmas, so it can take on any value.
             # softplus(x) = ln(1+e^{x})
             proposal_params = self.proposal_network(full_info)
-            print("porposal_params:", proposal_params.shape)
+            print("porposal:", proposal_params)
 
             # Takes the proposal_parameters and returns a normal distribution,
             # which is component-wise independent.
