@@ -106,8 +106,6 @@ class VAEAC(Module):
             # softplus(x) = ln(1+e^{x})
             proposal_params = self.proposal_network(full_info)
 
-            print(proposal_params.shape)
-            print(proposal_params)
             # Takes the proposal_parameters and returns a normal distribution,
             # which is component-wise independent.
             # If sigma (after softmax transform) is less than 1e-3,
@@ -125,6 +123,14 @@ class VAEAC(Module):
         # Create the normal distribution based on the parameters
         # (mu, sigma) from the prior_network
         prior = normal_parse_params(prior_params, 1e-3)
+
+        z_proposal = proposal.sample()
+        z_prior = prior.sample()
+
+        print("latent z")
+        print(z_proposal)
+        print(z_prior)
+
 
         # call the scm layer but only on the relevant features on both latent distributions
         l_z_proposal = self.scm(proposal[:, :self.relevant_latents])  # unsure wether we need to order them so that the
