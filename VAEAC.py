@@ -125,6 +125,7 @@ class VAEAC(Module):
         prior = normal_parse_params(prior_params, 1e-3)
 
         # call the scm layer but only on the relevant features on both latent distributions
+        print("Relevant features for input SCM layerr", proposal[:, :self.relevant_latents])
         l_z_proposal = self.scm(proposal[:, :self.relevant_latents])  # unsure wether we need to order them so that the
         # num_label are at the front
         o_z_proposal = proposal[:, self.relevant_latents:]
