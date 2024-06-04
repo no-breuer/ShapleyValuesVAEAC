@@ -142,8 +142,6 @@ class VAEAC(Module):
         causal_prior = normal_parse_params(z_causal_prior, 1e-3)
         # Return the two multivariate normal distributions.
 
-        print("this is causal_prior distr.")
-        print(causal_prior)
         return causal_proposal, causal_prior
 
     def prior_regularization(self, prior):
@@ -265,6 +263,8 @@ class VAEAC(Module):
             # I.e., z_i ~ q_phi(z|x,y)
             latent = proposal.rsample()  # See equation 18 on page 18.
 
+            print(latent.shape)
+            print(latent)
             # Then we compute/decode the latent variables by sending the
             # means and the sigmas through the generative network.
             # We end up with parameters and NOT FINAL INSTANCES!
