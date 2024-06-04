@@ -256,7 +256,6 @@ class VAEAC(Module):
         """
         # Get two normal distributions of dimension 64, where the
         # parameters are obtained from the proposal and prior networks.
-        print("this is batch shape", batch.shape)
         proposal, prior = self.make_latent_distributions(batch, mask)
         estimates = []
 
@@ -264,6 +263,8 @@ class VAEAC(Module):
             # Create samples from the proposal network (the encoder).
             # I.e., z_i ~ q_phi(z|x,y)
             latent = proposal.rsample()  # See equation 18 on page 18.
+            print("Latent shape:",  latent.shape)
+            print(latent)
 
             # Then we compute/decode the latent variables by sending the
             # means and the sigmas through the generative network.
