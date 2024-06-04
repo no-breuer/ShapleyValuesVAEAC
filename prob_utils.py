@@ -27,6 +27,8 @@ def normal_parse_params(params, min_sigma=0):
     d = params.shape[1]
     # Use double dash to get integer. Do not need it as we by construction always have 2*num_dim_latent_space
     mu = params[:, :d // 2]  # Get the first halves which are the means
+
+    print("Mu:", mu)
     sigma_params = params[:, d // 2:]  # Get the second half which are transformed sigmas
     sigma = softplus(sigma_params)  # ln(1 + exp(sigma_params))
     sigma = sigma.clamp(min=min_sigma)  # Make sure that sigma >= min_sigma
