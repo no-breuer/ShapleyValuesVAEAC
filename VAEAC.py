@@ -98,14 +98,12 @@ class VAEAC(Module):
             # Send the full_information through the proposal network
             # the encoder. It needs the full information to know if a
             # value is missing or just masked.
-            # We get out a matrix of size: batch_size x 64*2
-            # where 64 is the dimension of the latent space.
+            # We get out a matrix of size: batch_size x latent_dim*2
             # For each dimension we get a mean mu and a sd sigma.
             # the first 64 values are the mus and the last
             # 64 are the softplus of the sigmas, so it can take on any value.
             # softplus(x) = ln(1+e^{x})
-            proposal_params = self.proposal_network(full_info)
-            print("porposal:", proposal_params)
+            proposal_params = self.proposal_network(full_info)  # dim=64x6
 
             # Takes the proposal_parameters and returns a normal distribution,
             # which is component-wise independent.
@@ -127,6 +125,8 @@ class VAEAC(Module):
 
         z_proposal = proposal.rsample()
         z_prior = prior.rsample()
+
+        print("z_proposal shape:", z_proposal.shape)
 
         # call the scm layer but only on the relevant features on both latent distributions
         l_z_proposal = self.scm(z_proposal[:, :self.relevant_latents])  # unsure wether we need to order them so that the
