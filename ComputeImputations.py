@@ -19,6 +19,7 @@ from sys import stderr
 # %%
 import numpy as np
 import torch
+from torch import optim
 # import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from torch.nn.functional import softplus, softmax
@@ -43,6 +44,8 @@ def train_VAEAC_model(data_train,
                       param_now,
                       path_to_save_model,
                       one_hot_max_sizes,
+                      A,
+                      relevant_latents,
                       use_cuda=False,
                       num_different_vaeac_initiate=5,
                       epochs_initiation_phase=2,
@@ -257,14 +260,17 @@ def train_VAEAC_model(data_train,
                 mask_generator_only_these_coalitions_probabilities=mask_generator_only_these_coalitions_probabilities
             )
             #print(networks, file=stderr, flush=True)
+        print("Done BUILDING the Encoder and Decoder Models!")
 
-
+        print("Starting to build VAEAC:")
         # Build VAEAC on top of returned network
         model = VAEAC(
             networks['reconstruction_log_prob'],
             networks['proposal_network'],
             networks['prior_network'],
-            networks['generative_network']
+            networks['generative_network'],
+            relevant_latents,
+            A
         )
         #print([depth, width], file=stderr, flush=True)
         #print(model, file=stderr, flush=True)
@@ -277,6 +283,11 @@ def train_VAEAC_model(data_train,
         # The 1 in networks.get('vlb_scale_factor', 1) means that if
         # 'vlb_scale_factor' is not defined, return "1". This should not
         # be necessary for us.
+
+        # Load parameter for SCM optimization
+        scm_param = list(model.scm.parameters())
+        A_optimizer = optim.Adam(scm_param[0:1], lr=1e-3)  # learning rate als config file
+        prior_optimizer = optim.Adam(scm_param[1:], lr=5e-5, betas=(0.0, 0.999))  # learning rate als congif file und betas
 
         # A list of validation IWAE estimates
         validation_iwae = []
@@ -337,6 +348,8 @@ def train_VAEAC_model(data_train,
 
                 # Set previous gradients to zero
                 optimizer.zero_grad()
+                A_optimizer.zero_grad()
+                prior_optimizer.zero_grad()
 
                 # Compute the variational lower bound for the batch given the mask
                 vlb = model.batch_vlb(batch, mask).mean()
@@ -346,6 +359,8 @@ def train_VAEAC_model(data_train,
 
                 # Update the model parameters by using ADAM.
                 optimizer.step()
+                A_optimizer.step()
+                prior_optimizer.step()
 
                 # Update running variational lower bound average
                 avg_vlb += (float(vlb) - avg_vlb) / (i + 1)
@@ -554,6 +569,8 @@ def train_VAEAC_model(data_train,
             # do backpropragation because PyTorch accumulates the gradients
             # on subsequent backward passes
             optimizer.zero_grad()
+            A_optimizer.zero_grad()
+            prior_optimizer.zero_grad()
 
             # Send the batch and mask to Nvida GPU if we have. Would be faster.
             if use_cuda:
@@ -588,6 +605,8 @@ def train_VAEAC_model(data_train,
             # based on the current gradient (stored in .grad attribute of a parameter)
             # That is, for the proposal (encoder), the generative (decoder) and prior network.
             optimizer.step()
+            A_optimizer.step()
+            prior_optimizer.step()
 
             # update running variational lower bound average
             # a + (new - a)/(i+1) = {(i+1)a + new - a}/(i+1) = { a(i) + new}/(i+1) = a *i/(i+1) + new/(i+1)

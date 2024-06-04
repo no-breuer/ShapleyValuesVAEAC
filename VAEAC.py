@@ -6,6 +6,8 @@ from torch.nn import Module
 
 from prob_utils import normal_parse_params
 
+from CausalModel import *
+
 from log_utils import log_tensor
 
 
@@ -39,7 +41,8 @@ class VAEAC(Module):
       experimental setups the model was tested on.
     """
     def __init__(self, rec_log_prob, proposal_network, prior_network,
-                 generative_network, sigma_mu=1e4, sigma_sigma=1e-4):
+                 generative_network, relevant_latents=None,
+                 A=None, sigma_mu=1e4, sigma_sigma=1e-4, prior='linscm'):
         super().__init__()
         self.rec_log_prob = rec_log_prob
         self.proposal_network = proposal_network
@@ -47,6 +50,8 @@ class VAEAC(Module):
         self.generative_network = generative_network
         self.sigma_mu = sigma_mu
         self.sigma_sigma = sigma_sigma
+        self.relevant_latents = relevant_latents
+        self.scm = SCM(relevant_latents, A, scm_type=prior)
 
     def make_observed(self, batch, mask):
         """
@@ -103,13 +108,12 @@ class VAEAC(Module):
             # Send the full_information through the proposal network
             # the encoder. It needs the full information to know if a
             # value is missing or just masked.
-            # We get out a matrix of size: batch_size x 64*2
-            # where 64 is the dimension of the latent space.
+            # We get out a matrix of size: batch_size x latent_dim*2
             # For each dimension we get a mean mu and a sd sigma.
             # the first 64 values are the mus and the last
             # 64 are the softplus of the sigmas, so it can take on any value.
             # softplus(x) = ln(1+e^{x})
-            proposal_params = self.proposal_network(full_info)
+            proposal_params = self.proposal_network(full_info)  # dim=64x6
 
             # Takes the proposal_parameters and returns a normal distribution,
             # which is component-wise independent.
@@ -143,13 +147,29 @@ class VAEAC(Module):
             log_file.write("Variance\n")
             log_tensor(prior.variance, log_file)
 
-        # prior is the same as z_fake in DEAR
-        #TODO: I think we have to add here the causal layer where the priors are "updated" according the A
-        # call it prior_ or something
+        z_proposal = proposal.rsample()  # dim 64 x 3
+        z_prior = prior.rsample()
+
+        # call the scm layer but only on the relevant features on both latent distributions
+        l_z_proposal = self.scm(z_proposal[:, :self.relevant_latents])  # unsure wether we need to order them so that the
+        # num_label are at the front
+        o_z_proposal = z_proposal[:, self.relevant_latents:]
+        z_causal_proposal = torch.cat([l_z_proposal, o_z_proposal], dim=1)
+
+        z_causal_proposal_mu = z_causal_proposal.mean(dim=0)
+        z_causal_proposal_sig = z_causal_proposal.std(dim=0)
+
+        l_z_prior = self.scm(z_prior[:, :self.relevant_latents])
+        o_z_prior = z_prior[:, self.relevant_latents:]
+        z_causal_prior = torch.cat([l_z_prior, o_z_prior], dim=1)
 
 
+        # create normal.distr. again
+        causal_proposal = normal_parse_params(z_causal_proposal, 1e-3)
+        causal_prior = normal_parse_params(z_causal_prior, 1e-3)
         # Return the two multivariate normal distributions.
-        return proposal, prior
+
+        return causal_proposal, causal_prior
 
     def prior_regularization(self, prior):
         """
@@ -279,10 +299,12 @@ class VAEAC(Module):
         # parameters are obtained from the proposal and prior networks.
         proposal, prior = self.make_latent_distributions(batch, mask)
         estimates = []
+
         for i in range(K):
             # Create samples from the proposal network (the encoder).
             # I.e., z_i ~ q_phi(z|x,y)
             latent = proposal.rsample()  # See equation 18 on page 18.
+            print("Latent shape:",  latent.shape)
 
             # Then we compute/decode the latent variables by sending the
             # means and the sigmas through the generative network.

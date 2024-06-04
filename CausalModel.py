@@ -11,7 +11,6 @@ class InvertiblePriorLinear(nn.Module):
         self.p = nn.Parameter(torch.rand([2]))
 
     def forward(self, eps):
-        print("i am computing o in invertible prior lineaer")
         o = self.p[0] * eps + self.p[1]
         return o
 
