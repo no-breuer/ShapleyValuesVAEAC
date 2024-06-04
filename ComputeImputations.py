@@ -34,6 +34,8 @@ from datasets2 import compute_normalization
 from train_utils import extend_batch, get_validation_iwae
 from VAEAC import VAEAC
 
+from log_utils import log_tensor
+
 
 # %%
 def train_VAEAC_model(data_train,
@@ -150,6 +152,13 @@ def train_VAEAC_model(data_train,
     # Get the number of observation and the dimension.
     data_train = np.array(data_train)
     n, p = data_train.shape
+
+    log_file = open("training_logs.txt", "w")
+
+    configuration_logs = ("Configuration\n------------------------------------\nInstances: " + str(n) +
+                          "\nFeature Space Dimension: " + str(p) + "\nLatent Dimension: " + str(latent_dim) +
+                          "\nEpochs: " + str(epochs) + "\nBatch Size: " + str(batch_size) + "\n------------------------------------\n\n")
+    log_file.write(configuration_logs)
 
     # Convert the data from numpy to a torch
     raw_data = torch.from_numpy(data_train).float()
@@ -397,6 +406,8 @@ def train_VAEAC_model(data_train,
     # %%
     # Start the training loop
     for epoch in range(epochs_initiation_phase, epochs):
+        log_file.write("Epoch " + str(epoch+1) + "\n--------\n")
+
         if verbose:
             if (epoch + 1) % (epochs / 10) == 0:
                 verbose_main = True
@@ -419,6 +430,8 @@ def train_VAEAC_model(data_train,
 
         # one epoch
         for i, batch in enumerate(iterator):
+            log_to_file = i < 3 or len(iterator) - i < 4  # log first and last three batches
+
             # the time to do a checkpoint is at start and end of the training
             # and after processing validation_batches batches
             if any([
@@ -547,11 +560,21 @@ def train_VAEAC_model(data_train,
                 batch = batch.cuda()
                 mask = mask.cuda()
 
+            if log_to_file:
+                log_file.write("Batch " + str(i+1) + "\n------\n")
+                log_file.write("Batch\n")
+                log_tensor(batch, log_file)
+                log_file.write("Mask\n")
+                log_tensor(mask, log_file)
+
             # Compute the variational lower bound for the batch
             # given the mask (which masks both nans and artificially nans)
             # Take the mean of the variational lower bound for each of the
             # instances in the batch.
-            vlb = model.batch_vlb(batch, mask).mean()
+            vlb = model.batch_vlb(batch, mask, log_file=log_file if log_to_file else None).mean()
+
+            if log_to_file:
+                log_file.write("Variational Lower Bound: " + str(vlb.detach().numpy()) + "\n\n")
 
             # We want to maximize the vlb, but adam minimize, so to get
             # a loss function we need to take the negative version.

@@ -9,7 +9,7 @@ library(abind)
 
 library(yaml)
 
-user_config <- yaml.load_file("user_config.yaml")
+user_config <- yaml.load_file("configs/user_config.yaml")
 
 # User need to specify the path of the folder where
 # the user downloaded the GitHub Repository.

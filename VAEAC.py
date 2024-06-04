@@ -6,6 +6,8 @@ from torch.nn import Module
 
 from prob_utils import normal_parse_params
 
+from log_utils import log_tensor
+
 
 class VAEAC(Module):
     """
@@ -64,7 +66,7 @@ class VAEAC(Module):
 
         return observed
 
-    def make_latent_distributions(self, batch, mask, no_proposal=False):
+    def make_latent_distributions(self, batch, mask, no_proposal=False, log_file=None):
         """
         Make latent distributions for the given batch and mask.
         No no_proposal is True, return None instead of proposal distribution.
@@ -72,6 +74,13 @@ class VAEAC(Module):
         # Start by creating the observed values where the masked is applied
         # such that the masked values are 0.
         observed = self.make_observed(batch, mask)
+
+        log = log_file is not None
+
+        if log:
+            log_file.write("1. Determine Latent Distributions\n\n")
+            log_file.write("Observed Features\n")
+            log_tensor(observed, log_file)
 
         # NOT COMPLETELY SURE WHAT NO_PROPOSAL MEANS
         # it is when we are not interested in the normal distribution
@@ -108,6 +117,13 @@ class VAEAC(Module):
             # then we set sigma to this value.
             proposal = normal_parse_params(proposal_params, 1e-3)
 
+            if log:
+                log_file.write("1.1 Latent Distribution of Full Encoder\n")
+                log_file.write("Mean\n")
+                log_tensor(proposal.mean, log_file)
+                log_file.write("Variance\n")
+                log_tensor(proposal.variance, log_file)
+
         # The we compute the normal parameters of the prior network
         # i.e., the third network that we are interested in
         # the one that computes the conditional dist where some
@@ -119,6 +135,13 @@ class VAEAC(Module):
         # Create the normal distribution based on the parameters
         # (mu, sigma) from the prior_network
         prior = normal_parse_params(prior_params, 1e-3)
+
+        if log:
+            log_file.write("1.2 Latent Distribution of Masked Encoder\n")
+            log_file.write("Mean\n")
+            log_tensor(prior.mean, log_file)
+            log_file.write("Variance\n")
+            log_tensor(prior.variance, log_file)
 
         # prior is the same as z_fake in DEAR
         #TODO: I think we have to add here the causal layer where the priors are "updated" according the A
@@ -159,17 +182,23 @@ class VAEAC(Module):
         # and they are later added to the model log-likelihood.
         return mu_regularizer + sigma_regularizer
 
-    def batch_vlb(self, batch, mask):
+    def batch_vlb(self, batch, mask, log_file=None):
         """
         Compute differentiable lower bound for the given batch of objects
         and mask.
         """
+
+        log = log_file is not None
+
+        if log:
+            log_file.write("Compute Variational Lower Bound\n----------------------------------------\n")
+
         # Want to compute the variational lower bound of the given batch
         # which is used for training the networks
 
         # Compute the normal distributions obtained from
         # the proposal and prior networks
-        proposal, prior = self.make_latent_distributions(batch, mask)
+        proposal, prior = self.make_latent_distributions(batch, mask, log_file=log_file)
 
         # Apply the regularization on the mus and sigmas of
         # normal dist obtained from the prior networks such that
@@ -212,6 +241,14 @@ class VAEAC(Module):
         # Then we sum over the rows, so that we add the KL for each dim together
         # to get the total kl div for each of the instances.
         kl = kl_divergence(proposal, prior).view(batch.shape[0], -1).sum(-1)
+
+        if log:
+            log_file.write("2. Sample Latent Variables from Full Encoder's Latent Distribution\n")
+            log_tensor(latent, log_file)
+            log_file.write("3. Recreation Loss\n")
+            log_tensor(rec_loss, log_file)
+            log_file.write("4. KL Divergence\n")
+            log_tensor(kl, log_file)
 
         # Obtain the variational lower bound as as given in eq 6 on page 5.
         # We want to maximize this lower bound.

@@ -2,6 +2,9 @@
 library(shapr)
 library(ranger)
 library(data.table)
+library(yaml)
+
+model_config <- yaml.load_file("configs/model_config.yaml")
 
 # Load the R files needed for computing Shapley values using VAEAC.
 source("Source_Shapr_VAEAC.R")
@@ -26,11 +29,12 @@ explainer <- shapr(abalone[abalone$test_instance == FALSE, c(3,6,9)], model)
 # Train the VAEAC model with specified parameters and add it to the explainer
 explainer_added_vaeac = add_vaeac_to_explainer(
   explainer, 
-  epochs = 30L,
+  epochs = model_config$epochs,
   width = 32L,
   depth = 3L,
-  latent_dim = 8L,
+  latent_dim = model_config$latent_dim,
   lr = 0.002,
+  batch_size = model_config$batch_size,
   num_different_vaeac_initiate = 2L,
   epochs_initiation_phase = 2L,
   validation_iwae_num_samples = 25L,
@@ -64,58 +68,59 @@ plot(explanation, plot_phi0 = FALSE)
 dev.off()
 
 
-###########################
-##### Masking Schemes #####
-###########################
-# A small illustration of the use of VAEAC when Shapr samples the coalitions. (samples 4 coalitions)
-set.seed(2022)
-explainer_sampled <- shapr(abalone[abalone$test_instance == FALSE, c(3,6,9)], model, n_combinations = 4)
-#> The specified model provides feature classes that are NA. The classes of data are taken as the truth.
-
-# Number of coalitions sampled (removed edge cases)
-n_coalitions = nrow(explainer_sampled$S) - 2
-
-# Train the VAEAC_C model with specified parameters and coalitions and add it to the explainer
-explainer_added_vaeac_sampled = add_vaeac_to_explainer(
-  explainer_sampled, 
-  epochs = 30L,
-  width = 32L,
-  depth = 3L,
-  latent_dim = 8L,
-  lr = 0.002,
-  num_different_vaeac_initiate = 2L,
-  epochs_initiation_phase = 2L,
-  validation_iwae_num_samples = 25L,
-  verbose_summary = TRUE,
-  mask_generator_only_these_coalitions = explainer_sampled$S[2:(n_coalitions+1),],
-  mask_generator_only_these_coalitions_probabilities = explainer_sampled$X$shapley_weight[2:(n_coalitions+1)] # Do not need to be standardized. 
-)
-
-# Compute the Shapley values with respect to feature dependence using
-# the VAEAC_C approach with parameters defined above
-explanation_sampled = explain.vaeac(abalone[abalone$test_instance == TRUE][1:8,c(3,6,9)],
-                                approach = "vaeac",
-                                explainer = explainer_added_vaeac_sampled,
-                                n_samples = 250L,
-                                prediction_zero = phi_0,
-                                which_vaeac_model = "best")
-
-# Printing the Shapley values based on the sampled coalitions for the test data.
-print(explanation_sampled$dt)
-#>        none    Diameter ShuckedWeight         Sex
-#> 1: 9.927152  1.10051882     0.4878096 -0.08797535
-#> 2: 9.927152 -0.57753158    -0.4496048  1.16048591
-#> 3: 9.927152 -1.47832493    -0.9956322 -0.56769640
-#> 4: 9.927152  0.98457292     0.2895466 -1.47479065
-#> 5: 9.927152 -1.17077734    -0.8066726  0.80172046
-#> 6: 9.927152 -0.60118281    -0.4358604  1.18590353
-#> 7: 9.927152 -0.02444789     0.1094176 -1.18259171
-#> 8: 9.927152  1.17234737     0.2177909 -0.07578500
-
-# Finally, we plot the resulting explanations based on the sampled coalitions.
-png("Vignette_results_sampled.png", res = 150, height = 1000, width = 1250)
-plot(explanation_sampled, plot_phi0 = FALSE)
-dev.off()
+# ###########################
+# ##### Masking Schemes #####
+# ###########################
+# # A small illustration of the use of VAEAC when Shapr samples the coalitions. (samples 4 coalitions)
+# set.seed(2022)
+# explainer_sampled <- shapr(abalone[abalone$test_instance == FALSE, c(3,6,9)], model, n_combinations = 4)
+# #> The specified model provides feature classes that are NA. The classes of data are taken as the truth.
+#
+# # Number of coalitions sampled (removed edge cases)
+# n_coalitions = nrow(explainer_sampled$S) - 2
+#
+# # Train the VAEAC_C model with specified parameters and coalitions and add it to the explainer
+# explainer_added_vaeac_sampled = add_vaeac_to_explainer(
+#   explainer_sampled,
+#   epochs = model_config$epochs,
+#   width = 32L,
+#   depth = 3L,
+#   latent_dim = model_config$latent_dim,
+#   lr = 0.002,
+#   batch_size = model_config$batch_size,
+#   num_different_vaeac_initiate = 2L,
+#   epochs_initiation_phase = 2L,
+#   validation_iwae_num_samples = 25L,
+#   verbose_summary = TRUE,
+#   mask_generator_only_these_coalitions = explainer_sampled$S[2:(n_coalitions+1),],
+#   mask_generator_only_these_coalitions_probabilities = explainer_sampled$X$shapley_weight[2:(n_coalitions+1)] # Do not need to be standardized.
+# )
+#
+# # Compute the Shapley values with respect to feature dependence using
+# # the VAEAC_C approach with parameters defined above
+# explanation_sampled = explain.vaeac(abalone[abalone$test_instance == TRUE][1:8,c(3,6,9)],
+#                                 approach = "vaeac",
+#                                 explainer = explainer_added_vaeac_sampled,
+#                                 n_samples = 250L,
+#                                 prediction_zero = phi_0,
+#                                 which_vaeac_model = "best")
+#
+# # Printing the Shapley values based on the sampled coalitions for the test data.
+# print(explanation_sampled$dt)
+# #>        none    Diameter ShuckedWeight         Sex
+# #> 1: 9.927152  1.10051882     0.4878096 -0.08797535
+# #> 2: 9.927152 -0.57753158    -0.4496048  1.16048591
+# #> 3: 9.927152 -1.47832493    -0.9956322 -0.56769640
+# #> 4: 9.927152  0.98457292     0.2895466 -1.47479065
+# #> 5: 9.927152 -1.17077734    -0.8066726  0.80172046
+# #> 6: 9.927152 -0.60118281    -0.4358604  1.18590353
+# #> 7: 9.927152 -0.02444789     0.1094176 -1.18259171
+# #> 8: 9.927152  1.17234737     0.2177909 -0.07578500
+#
+# # Finally, we plot the resulting explanations based on the sampled coalitions.
+# png("Vignette_results_sampled.png", res = 150, height = 1000, width = 1250)
+# plot(explanation_sampled, plot_phi0 = FALSE)
+# dev.off()
 
 
 
