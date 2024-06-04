@@ -132,8 +132,11 @@ class VAEAC(Module):
         o_z_proposal = z_proposal[:, self.relevant_latents:]
         z_causal_proposal = torch.cat([l_z_proposal, o_z_proposal], dim=1)
 
-        print("z_causal shape:", z_causal_proposal.shape)
-        print(z_causal_proposal)
+        z_causal_proposal_mu = z_causal_proposal.mean(dim=0)
+        z_causal_proposal_sig = z_causal_proposal.std(dim=0)
+
+        print("Mu:",z_causal_proposal_mu)
+        print("Sig:", z_causal_proposal_sig)
 
         l_z_prior = self.scm(z_prior[:, :self.relevant_latents])
         o_z_prior = z_prior[:, self.relevant_latents:]
