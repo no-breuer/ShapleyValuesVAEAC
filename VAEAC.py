@@ -105,6 +105,7 @@ class VAEAC(Module):
             # 64 are the softplus of the sigmas, so it can take on any value.
             # softplus(x) = ln(1+e^{x})
             proposal_params = self.proposal_network(full_info)
+            print("porposal_params:", proposal_params.shape)
 
             # Takes the proposal_parameters and returns a normal distribution,
             # which is component-wise independent.
@@ -133,6 +134,7 @@ class VAEAC(Module):
         o_z_proposal = z_proposal[:, self.relevant_latents:]
         z_causal_proposal = torch.cat([l_z_proposal, o_z_proposal], dim=1)
 
+        print("z_causal shape:", z_causal_proposal.shape)
         l_z_prior = self.scm(z_prior[:, :self.relevant_latents])
         o_z_prior = z_prior[:, self.relevant_latents:]
         z_causal_prior = torch.cat([l_z_prior, o_z_prior], dim=1)
@@ -142,6 +144,8 @@ class VAEAC(Module):
         causal_prior = normal_parse_params(z_causal_prior, 1e-3)
         # Return the two multivariate normal distributions.
 
+        sample = causal_proposal.rsample()
+        print("Sample shape:", sample.shape)
         return causal_proposal, causal_prior
 
     def prior_regularization(self, prior):
@@ -264,7 +268,6 @@ class VAEAC(Module):
             # I.e., z_i ~ q_phi(z|x,y)
             latent = proposal.rsample()  # See equation 18 on page 18.
             print("Latent shape:",  latent.shape)
-            print(latent)
 
             # Then we compute/decode the latent variables by sending the
             # means and the sigmas through the generative network.
