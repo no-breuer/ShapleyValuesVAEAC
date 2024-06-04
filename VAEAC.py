@@ -265,8 +265,6 @@ class VAEAC(Module):
             # I.e., z_i ~ q_phi(z|x,y)
             latent = proposal.rsample()  # See equation 18 on page 18.
 
-            print(latent.shape)
-            print(latent)
             # Then we compute/decode the latent variables by sending the
             # means and the sigmas through the generative network.
             # We end up with parameters and NOT FINAL INSTANCES!
