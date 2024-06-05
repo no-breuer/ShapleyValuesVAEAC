@@ -143,9 +143,9 @@ class VAEAC(Module):
         # causal mu and sigma of the relevant features
 
         # num_label are at the front
-        all_proposal_mu = torch.cat((c_prior_mu, prior_mu[:, self.relevant_latents:]),
+        all_prior_mu = torch.cat((c_prior_mu, prior_mu[:, self.relevant_latents:]),
                                     dim=1)  # mu and sigma of irelevant features
-        all_proposal_sigma = torch.cat((c_prior_sigma, prior_sigma[:, self.relevant_latents:]), dim=1)
+        all_prior_sigma = torch.cat((c_prior_sigma, prior_sigma[:, self.relevant_latents:]), dim=1)
 
         causal_prior_params = torch.cat((all_prior_mu, all_prior_sigma), dim=1)
 

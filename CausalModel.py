@@ -162,10 +162,10 @@ class SCM(nn.Module):
     def inv_cal(self, mu_params, sigma_params):  # (I-A)^{-1}*eps
         adj_normalized = torch.inverse(torch.eye(self.A.shape[0], device=self.A.device) - self.A)
         print(adj_normalized.shape)
-        print(mu_params)
-        print(sigma_params)
+        print(mu_params.shape)
+        print(sigma_params.shape)
         z_mean = torch.matmul(mu_params, adj_normalized)
-        z_sigma = adj_normalized % sigma_params % adj_normalized.T
+        z_sigma = torch.matmul(sigma_params, adj_normalized)
         return z_mean, z_sigma
 
     def get_eps(self, z):

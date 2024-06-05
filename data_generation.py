@@ -201,7 +201,7 @@ def execute():
     seed = 0
     data_dim = 6
     latent_dim = 3
-    latent_case = 'scm_sparse'
+    latent_case = 'scm_dense'
     poly_degree = 2
     train_size = 5000
     test_size = 5000
