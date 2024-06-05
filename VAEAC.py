@@ -82,7 +82,7 @@ class VAEAC(Module):
         # of the latent space computed based on the proposal network
         # Used when we just want to generate new samples based only on the prior.
         if no_proposal:
-            proposal = None
+            causal_proposal = None
 
         else:
             # Default to go in here
@@ -105,11 +105,25 @@ class VAEAC(Module):
             # softplus(x) = ln(1+e^{x})
             proposal_params = self.proposal_network(full_info)  # dim=64x6
 
+            d = proposal_params.shape[1]
+            proposal_mu = proposal_params[:, :d // 2]
+            proposal_sigma= softplus(proposal_params[:, d // 2:])
+
+            # call the scm layer but only on the relevant features on both latent distributions
+            c_proposal_mu, c_proposal_sigma = self.scm(proposal_mu[:, :self.relevant_latents],
+                                                       proposal_sigma[:, :self.relevant_latents])
+            # causal mu and sigma of the relevant features
+
+            # num_label are at the front
+            all_proposal_mu = torch.cat((c_proposal_mu, proposal_mu[:, self.relevant_latents:]), dim=1)  # mu and sigma of irelevant features
+            all_proposal_sigma = torch.cat((c_proposal_sigma, proposal_sigma[:, self.relevant_latents:]), dim=1)
+
+            causal_proposal_params = torch.cat((all_proposal_mu, all_proposal_sigma), dim=1)
             # Takes the proposal_parameters and returns a normal distribution,
             # which is component-wise independent.
             # If sigma (after softmax transform) is less than 1e-3,
             # then we set sigma to this value.
-            proposal = normal_parse_params(proposal_params, 1e-3)
+            causal_proposal = normal_parse_params(causal_proposal_params, 1e-3)
 
         # The we compute the normal parameters of the prior network
         # i.e., the third network that we are interested in
@@ -119,31 +133,26 @@ class VAEAC(Module):
         # we send in the observed values and the mask.
         prior_params = self.prior_network(torch.cat([observed, mask], 1))
 
-        # Create the normal distribution based on the parameters
-        # (mu, sigma) from the prior_network
-        prior = normal_parse_params(prior_params, 1e-3)
-
-        z_proposal = proposal.rsample()  # dim 64 x 3
-        z_prior = prior.rsample()
+        d = prior_params.shape[1]
+        prior_mu = prior_params[:, :d // 2]
+        prior_sigma = softplus(prior_params[:, d // 2:])
 
         # call the scm layer but only on the relevant features on both latent distributions
-        l_z_proposal = self.scm(z_proposal[:, :self.relevant_latents])  # unsure wether we need to order them so that the
+        c_prior_mu, c_prior_sigma = self.scm(prior_mu[:, :self.relevant_latents],
+                                                   prior_sigma[:, :self.relevant_latents])
+        # causal mu and sigma of the relevant features
+
         # num_label are at the front
-        o_z_proposal = z_proposal[:, self.relevant_latents:]
-        z_causal_proposal = torch.cat([l_z_proposal, o_z_proposal], dim=1)
+        all_proposal_mu = torch.cat((c_prior_mu, prior_mu[:, self.relevant_latents:]),
+                                    dim=1)  # mu and sigma of irelevant features
+        all_proposal_sigma = torch.cat((c_prior_sigma, prior_sigma[:, self.relevant_latents:]), dim=1)
 
-        z_causal_proposal_mu = z_causal_proposal.mean(dim=0)
-        z_causal_proposal_sig = z_causal_proposal.std(dim=0)
-
-        l_z_prior = self.scm(z_prior[:, :self.relevant_latents])
-        o_z_prior = z_prior[:, self.relevant_latents:]
-        z_causal_prior = torch.cat([l_z_prior, o_z_prior], dim=1)
+        causal_prior_params = torch.cat((all_prior_mu, all_prior_sigma), dim=1)
 
 
-        # create normal.distr. again
-        causal_proposal = normal_parse_params(z_causal_proposal, 1e-3)
-        causal_prior = normal_parse_params(z_causal_prior, 1e-3)
-        # Return the two multivariate normal distributions.
+        # Create the normal distribution based on the parameters
+        # (mu, sigma) from the prior_network
+        causal_prior = normal_parse_params(causal_prior_params, 1e-3)
 
         return causal_proposal, causal_prior
 
