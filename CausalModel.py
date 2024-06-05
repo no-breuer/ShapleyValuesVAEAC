@@ -164,7 +164,7 @@ class SCM(nn.Module):
         print(adj_normalized.shape)
         print(mu_params)
         print(sigma_params)
-        z_mean = torch.matmul(mu, adj_normalized)
+        z_mean = torch.matmul(mu_params, adj_normalized)
         z_sigma = adj_normalized % sigma_params % adj_normalized.T
         return z_mean, z_sigma
 
