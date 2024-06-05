@@ -179,7 +179,7 @@ class SCM(nn.Module):
         return self.prior_nlr(z_new)
 
     def forward(self, eps_mu=None, eps_sigma=None, z=None):
-        if eps is not None and z is None:
+        if eps_mu is not None and eps_sigma is not None and z is None:
             print("I am in SCM forward")
 
             # (I-A.t)^{-1}*eps
