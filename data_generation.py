@@ -28,10 +28,6 @@ from scipy.stats import bernoulli
 from dag_generator import DagGenerator
 
 
-# Helper functions the most important one is generate latent vector and in that the latent_case = "scm"
-# Also important is compute_decoder_plolynomial and compute_kronecker_product that map the latent space z into a
-# high dimensional dataset
-
 def compute_kronecker_product(degree, latent):
     if degree == 0:
         out = np.array([1])
@@ -143,7 +139,7 @@ def generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_i
             latent_dict = {}
             for intervene_idx in range(latent_dim):
                 dag_copy = copy.deepcopy(dag)
-                df, obj = dag_copy.intervene(intervention_nodes=[intervene_idx],
+                df, obj, adj_matrix = dag_copy.intervene(intervention_nodes=[intervene_idx],
                                              target_distribution='hard_intervention')
                 latent_dict[intervene_idx] = df
             for idx, intervene_idx in np.ndenumerate(intervention_indices):
@@ -152,13 +148,9 @@ def generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_i
             df, obj, adj_matrix = dag.generate()
             z = df.values[:dataset_size, :]
 
-        print("ADJ MATRIX")
-        print(adj_matrix)
         nx.draw_networkx(obj, arrows=True)
-        plt.show()
         plt.savefig(base_dir + latent_case + '.jpg')
         plt.clf()
-
 
     return z, adj_matrix
 
@@ -199,8 +191,8 @@ def execute():
     """
     # Initilaize arguments (TODO: translate into parser env)
     seed = 0
-    data_dim = 6
-    latent_dim = 3
+    data_dim = 10
+    latent_dim = 4
     latent_case = 'scm_dense'
     poly_degree = 2
     train_size = 5000
@@ -220,7 +212,6 @@ def execute():
 
     # DAG
     # NOTE: For this configuration to work we need to have the same train and test size
-    # Generates DAG from which the latent z values will be created
     if latent_case == 'scm_sparse':
         dag = DagGenerator('linear', cause='gaussian', nodes=latent_dim, npoints=max(train_size, test_size),
                            expected_density=0.5)
@@ -261,30 +252,31 @@ def execute():
                 z, adj_matrix = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=1,
                                            intervention_indices=y, dag=dag, base_dir=base_dir)
 
+
             #print('Latent Z')
             #print(z.shape)
             #print(z[:5])
 
             #Transforming the latent via polynomial decoder to dataset
-            print('Data X')
+            #print('Data X')
             x=[]
             for idx in range(z.shape[0]):
-                x.append( compute_decoder_polynomial(poly_degree, z[idx, :] ) )
+                x.append(compute_decoder_polynomial(poly_degree, z[idx, :] ) )
             x= np.concatenate(x, axis=0)
-            print(x.shape)
+            #print(x.shape)
 
             x1= np.matmul(x[:, :1+latent_dim], coff_matrix[:1+latent_dim, :])
-            print('X1')
+            #print('X1')
             print('Min', np.min(np.abs(x1)), 'Max', np.max(np.abs(x1)), 'Mean', np.mean(np.abs(x1)))
 
             x2= np.matmul(x[:, 1+latent_dim:], coff_matrix[1+latent_dim:, :])
             norm_factor= 0.5 * np.max(np.abs(x2)) / np.max(np.abs(x1))
             x2 = x2 / norm_factor
-            print('X2')
+            #print('X2')
             print('Min', np.min(np.abs(x2)), 'Max', np.max(np.abs(x2)), 'Mean', np.mean(np.abs(x2)))
 
             x= (x1+x2)
-            print(x.shape)
+            #print(x.shape)
 
             f= base_dir + data_case + '_' + 'x' + '.npy'
             np.save(f, x)
@@ -295,4 +287,6 @@ def execute():
             f= base_dir + data_case + '_' + 'y' + '.npy'
             np.save(f, y)
 
-            return x, z, y, adj_matrix
+    print("Data generation done...")
+
+    return adj_matrix

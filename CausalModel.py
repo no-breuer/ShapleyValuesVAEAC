@@ -96,6 +96,7 @@ class InvertiblePriorInv(nn.Module):
 
 class SCM(nn.Module):
     def __init__(self, d, A=None, scm_type='mlp'):
+        print("initializing the causal model...")
         super().__init__()
         self.d = d
         self.A_given = A
@@ -161,9 +162,6 @@ class SCM(nn.Module):
 
     def inv_cal(self, mu_params, sigma_params):  # (I-A)^{-1}*eps
         adj_normalized = torch.inverse(torch.eye(self.A.shape[0], device=self.A.device) - self.A)
-        print(adj_normalized.shape)
-        print(mu_params.shape)
-        print(sigma_params.shape)
         z_mean = torch.matmul(mu_params, adj_normalized)
         z_sigma = torch.matmul(sigma_params, adj_normalized)
         return z_mean, z_sigma
@@ -183,8 +181,6 @@ class SCM(nn.Module):
 
     def forward(self, eps_mu=None, eps_sigma=None, z=None):
         if eps_mu is not None and eps_sigma is not None and z is None:
-            print("I am in SCM forward")
-
             # (I-A.t)^{-1}*eps
             z_mu, z_sigma = self.inv_cal(eps_mu, eps_sigma)  # n x d
             # nonlinear transform

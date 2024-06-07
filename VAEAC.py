@@ -119,6 +119,7 @@ class VAEAC(Module):
             all_proposal_sigma = torch.cat((c_proposal_sigma, proposal_sigma[:, self.relevant_latents:]), dim=1)
 
             causal_proposal_params = torch.cat((all_proposal_mu, all_proposal_sigma), dim=1)
+
             # Takes the proposal_parameters and returns a normal distribution,
             # which is component-wise independent.
             # If sigma (after softmax transform) is less than 1e-3,
@@ -148,7 +149,6 @@ class VAEAC(Module):
         all_prior_sigma = torch.cat((c_prior_sigma, prior_sigma[:, self.relevant_latents:]), dim=1)
 
         causal_prior_params = torch.cat((all_prior_mu, all_prior_sigma), dim=1)
-
 
         # Create the normal distribution based on the parameters
         # (mu, sigma) from the prior_network
@@ -275,7 +275,6 @@ class VAEAC(Module):
             # Create samples from the proposal network (the encoder).
             # I.e., z_i ~ q_phi(z|x,y)
             latent = proposal.rsample()  # See equation 18 on page 18.
-            print("Latent shape:",  latent.shape)
 
             # Then we compute/decode the latent variables by sending the
             # means and the sigmas through the generative network.

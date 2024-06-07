@@ -15,7 +15,8 @@ from math import ceil
 from os.path import join
 from os import replace
 from sys import stderr
-
+import seaborn as sns
+import matplotlib.pyplot as plt
 # %%
 import numpy as np
 import torch
@@ -63,7 +64,7 @@ def train_VAEAC_model(data_train,
                       mask_generator_only_these_coalitions_probabilities=None,
                       verbose=False,
                       verbose_init=False,
-                      verbose_summary=False
+                      verbose_summary=True
                       ):
     """
     Function that fits a VAEAC-model to the given dataset,
@@ -253,7 +254,7 @@ def train_VAEAC_model(data_train,
             #print(networks, file=stderr, flush=True)
         print("Done BUILDING the Encoder and Decoder Models!")
 
-        print("Starting to build VAEAC:")
+        print("Starting to build VAEAC...")
         # Build VAEAC on top of returned network
         model = VAEAC(
             networks['reconstruction_log_prob'],
@@ -278,7 +279,8 @@ def train_VAEAC_model(data_train,
         # Load parameter for SCM optimization
         scm_param = list(model.scm.parameters())
         A_optimizer = optim.Adam(scm_param[0:1], lr=1e-3)  # learning rate als config file
-        prior_optimizer = optim.Adam(scm_param[1:], lr=5e-5, betas=(0.0, 0.999))  # learning rate als congif file und betas
+        prior_optimizer = optim.Adam(scm_param[1:], lr=5e-5, betas=(0.0, 0.999))  # learning rate als congif file
+        # und betas
 
         # A list of validation IWAE estimates
         validation_iwae = []
@@ -314,6 +316,7 @@ def train_VAEAC_model(data_train,
                         i % validation_batches == validation_batches - 1,
                         i + 1 == len(dataloader)]):
 
+                    print("computing the validation iwae...")
                     # Compute the validation iwae
                     val_iwae = get_validation_iwae(val_dataloader,
                                                    mask_generator,
@@ -411,6 +414,7 @@ def train_VAEAC_model(data_train,
 
     # %%
     # Start the training loop
+    print("starting the training loop...")
     for epoch in range(epochs_initiation_phase, epochs):
         if verbose:
             if (epoch + 1) % (epochs / 10) == 0:
@@ -652,9 +656,12 @@ def train_VAEAC_model(data_train,
                  last_state['validation_iwae_running_avg'][-1]
                  ), file=stderr, flush=True)
 
+    print(model.scm.A_given)
+    ax = sns.heatmap(model.scm.A.detach().numpy(), linewidth=0.5)
+    plt.show()
     return filename_best, filename_best_running, filename_last, \
            np.array(train_vlb), np.array(validation_iwae), \
-           np.array(validation_iwae_running_avg)
+           np.array(validation_iwae_running_avg), model.scm.A, model.scm.A_given
 
 
 def VAEAC_training_vlb_and_validation_iwae(path_VAEAC_model):
