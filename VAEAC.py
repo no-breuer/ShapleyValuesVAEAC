@@ -155,13 +155,6 @@ class VAEAC(Module):
         prior_mu = prior_params[:, :d // 2]
         prior_sigma = softplus(prior_params[:, d // 2:])
 
-        if log:
-            log_file.write("1.2 Latent Distribution of Masked Encoder\n")
-            log_file.write("Mean\n")
-            log_tensor(prior_mu, log_file)
-            log_file.write("Variance\n")
-            log_tensor(prior_sigma, log_file)
-
         # call the scm layer but only on the relevant features on both latent distributions
         c_prior_mu, c_prior_sigma = self.scm(prior_mu[:, :self.relevant_latents],
                                                    prior_sigma[:, :self.relevant_latents])
@@ -177,6 +170,13 @@ class VAEAC(Module):
         # Create the normal distribution based on the parameters
         # (mu, sigma) from the prior_network
         causal_prior = normal_parse_params(causal_prior_params, 1e-3)
+
+        if log:
+            log_file.write("1.2 Latent Distribution of Masked Encoder\n")
+            log_file.write("Mean\n")
+            log_tensor(causal_prior.mean, log_file)
+            log_file.write("Variance\n")
+            log_tensor(causal_prior.variance, log_file)
 
         return causal_proposal, causal_prior
 
