@@ -104,13 +104,11 @@ class DagGenerator:
                           'x': Multimodal_X_Mechanism,
                           'circle': Multimodal_Circle_Mechanism,
                           'adn': Multimodal_ADN_Mechanism,
-                          'post_nonlinear': PostNonLinear_Mechanism }[causal_mechanism]
+                          'post_nonlinear': PostNonLinear_Mechanism}[causal_mechanism]
 
         self.causal_mechanism = causal_mechanism
         self.positive = False
         self.rescale = rescale
-
-
         self.data = pd.DataFrame(None, columns=["V{}".format(i) for i in range(nodes)])
         self.nodes = nodes
         self.npoints = npoints
@@ -243,6 +241,7 @@ class DagGenerator:
                 if isinstance(cfunction, GaussianProcessMix_Mechanism):
                     cfunction.nb_step += 1
         self.cfunctions = self.original_cfunctions[:]
+        print("These are cfunction", self.cfunctions)
 
 
     def reinitialize(self):
@@ -270,7 +269,6 @@ class DagGenerator:
         if self.cfunctions is None:
             print('Variables initialized')
             self.init_variables()
-
 
         for i in nx.topological_sort(self.g):
             # Root cause
@@ -364,7 +362,7 @@ class DagGenerator:
             self.generate(npoints)
         else:
             self.generate()
-        return self.data.values, self.g, self.adjacency_matrix
+        return self.data.values, self.g, self.original_adjacency_matrix
 
 
     def to_csv(self, fname_radical, **kwargs):

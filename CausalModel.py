@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torch.nn.functional import softplus, softmax
 import numpy as np
 
 
@@ -95,6 +96,7 @@ class InvertiblePriorInv(nn.Module):
 
 class SCM(nn.Module):
     def __init__(self, d, A=None, scm_type='mlp'):
+        print("initializing the causal model...")
         super().__init__()
         self.d = d
         self.A_given = A
@@ -124,14 +126,27 @@ class SCM(nn.Module):
                     if self.A_fix_idx[i, j]:
                         self.A.grad.data[i, j].zero_()
 
-    def prior_nlr(self, z):
+    def prior_nlr(self, z_mu, z_sigma):
         '''Nonlinear transformation f_2(z)'''
-        zs = torch.split(z, 1, dim=1)
-        z_new = []
-        for i in range(self.d):
-            z_new.append(getattr(self, "prior_net%d" % i)(zs[i]))
-        return torch.cat(z_new, dim=1)
+        zs_mu = torch.split(z_mu, 1, dim=1)
+        zs_sigma = torch.split(z_sigma, 1, dim=1)
 
+        z_mu_new = []
+        z_sigma_new = []
+
+        # Apply the nonlinear transformation to each part of z1
+        for i in range(len(zs_mu)):
+            z_mu_new.append(getattr(self, "prior_net%d" % i)(zs_mu[i]))
+
+        # Apply the nonlinear transformation to each part of z2
+        for i in range(len(zs_sigma)):
+            z_sigma_new.append(getattr(self, "prior_net%d" % i)(zs_sigma[i]))
+
+        # Concatenate the results along the second dimension
+        causal_z_mu = torch.cat(z_mu_new, dim=1)
+        causal_z_sigma = torch.cat(z_sigma_new, dim=1)
+
+        return causal_z_mu, causal_z_sigma
     def enc_nlr(self, z):
         '''f_2^{-1}(z)'''
         zs = torch.split(z, 1, dim=1)
@@ -145,10 +160,11 @@ class SCM(nn.Module):
         print(self.A)
         return z
 
-    def inv_cal(self, eps):  # (I-A)^{-1}*eps
+    def inv_cal(self, mu_params, sigma_params):  # (I-A)^{-1}*eps
         adj_normalized = torch.inverse(torch.eye(self.A.shape[0], device=self.A.device) - self.A)
-        z_pre = torch.matmul(eps, adj_normalized)
-        return z_pre
+        z_mean = torch.matmul(mu_params, adj_normalized)
+        z_sigma = torch.matmul(sigma_params, adj_normalized)
+        return z_mean, z_sigma
 
     def get_eps(self, z):
         '''Returns epsilon from f_2^{-1}(z)'''
@@ -163,13 +179,12 @@ class SCM(nn.Module):
         z_new = z_new + self.get_eps(z_ori)
         return self.prior_nlr(z_new)
 
-    def forward(self, eps=None, z=None):
-        if eps is not None and z is None:
-            print("I am in SCM forward")
+    def forward(self, eps_mu=None, eps_sigma=None, z=None):
+        if eps_mu is not None and eps_sigma is not None and z is None:
             # (I-A.t)^{-1}*eps
-            z = self.inv_cal(eps)  # n x d
+            z_mu, z_sigma = self.inv_cal(eps_mu, eps_sigma)  # n x d
             # nonlinear transform
-            return self.prior_nlr(z)
+            return self.prior_nlr(z_mu, z_sigma)
         else:
             # f_2^{-1}(z)
             z = self.enc_nlr(z)
