@@ -162,7 +162,10 @@ def train_VAEAC_model(data_train,
     configuration_logs = ("Configuration\n------------------------------------\nInstances: " + str(n) +
                           "\nFeature Space Dimension: " + str(p) + "\nLatent Dimension: " + str(latent_dim) +
                           "\nEpochs: " + str(epochs) + "\nBatch Size: " + str(batch_size) + "\n------------------------------------\n\n")
+    data_logs = "Given A:\n" + str(A) + "\n------------------------------------\n\n"
+
     log_file.write(configuration_logs)
+    log_file.write(data_logs)
 
     # Convert the data from numpy to a torch
     raw_data = torch.from_numpy(data_train).float()
@@ -594,9 +597,6 @@ def train_VAEAC_model(data_train,
             # instances in the batch.
             vlb = model.batch_vlb(batch, mask, log_file=log_file if log_to_file else None).mean()
 
-            if log_to_file:
-                log_file.write("Variational Lower Bound: " + str(vlb.detach().numpy()) + "\n\n")
-
             # We want to maximize the vlb, but adam minimize, so to get
             # a loss function we need to take the negative version.
             # Accumulate (i.e. sum) all gradients of the loss function
@@ -622,6 +622,10 @@ def train_VAEAC_model(data_train,
                 # Change the description (text before progress bar),
                 # so that the user see that we now are training.
                 iterator.set_description('Train VLB: %g' % avg_vlb)
+
+            if log_to_file:
+                log_file.write("Variational Lower Bound: " + str(vlb.detach().numpy()) + "\n\n")
+                log_file.write("Current A:\n" + str(model.scm.A.detach().numpy()) + "\n\n")
 
     # Also save the last fitted model
     last_state = deepcopy({
@@ -682,6 +686,7 @@ def train_VAEAC_model(data_train,
     print(model.scm.A_given)
     ax = sns.heatmap(model.scm.A.detach().numpy(), linewidth=0.5)
     plt.show()
+
     return filename_best, filename_best_running, filename_last, \
            np.array(train_vlb), np.array(validation_iwae), \
            np.array(validation_iwae_running_avg), model.scm.A, model.scm.A_given
