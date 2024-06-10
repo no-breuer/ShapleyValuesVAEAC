@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
     # train VAEAC model
     results = ComputeImputations.train_VAEAC_model(data_x, distribution, param_now, path_to_save_model,
-                                                   one_hot_max_sizes, A, relevant_latents, latent_dim=data_z.shape[1])
+                                                   one_hot_max_sizes, A, relevant_latents, latent_dim=data_z.shape[1], batch_size=8)
 
     print(results)
 

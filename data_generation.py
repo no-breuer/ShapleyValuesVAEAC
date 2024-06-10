@@ -195,8 +195,8 @@ def execute():
     latent_dim = 4
     latent_case = 'scm_dense'
     poly_degree = 2
-    train_size = 5000
-    test_size = 5000
+    train_size = 100
+    test_size = 100
 
     poly_size = compute_total_polynomial_terms(poly_degree, latent_dim)
     print('Total Polynomial Terms: ', poly_size)
