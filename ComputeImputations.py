@@ -64,7 +64,7 @@ def train_VAEAC_model(data_train,
                       mask_generator_only_these_coalitions_probabilities=None,
                       verbose=False,
                       verbose_init=False,
-                      verbose_summary=True
+                      verbose_summary=False
                       ):
     """
     Function that fits a VAEAC-model to the given dataset,
@@ -410,7 +410,7 @@ def train_VAEAC_model(data_train,
 
     # If we should print output in the main fitting loop
     # is updated if 'verbose' is true.
-    verbose_main = False
+    verbose_main = True
 
     # %%
     # Start the training loop

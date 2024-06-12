@@ -136,6 +136,8 @@ class DagGenerator:
 
         self.noise_coeff = noise_coeff
         self.adjacency_matrix = np.zeros((nodes, nodes))
+        self.top_adj_matrix = np.zeros((nodes, nodes))
+        self.top_data = pd.DataFrame(None, columns=["V{}".format(i) for i in range(nodes)])
         self.expected_density = expected_density
         self.dag_type = dag_type
         self.cfunctions = None
@@ -272,7 +274,6 @@ class DagGenerator:
 
         for i in nx.topological_sort(self.g):
             # Root cause
-
             if not sum(self.adjacency_matrix[:, i]):
                 self.data['V{}'.format(i)] = self.cfunctions[i](npoints)
             # Generating causes
@@ -282,7 +283,10 @@ class DagGenerator:
                 self.data['V{}'.format(i)] = scale(self.data['V{}'.format(i)].values)
                 if self.positive:
                     self.data['V{}'.format(i)] -= np.min(self.data['V{}'.format(i)].values) - 1e-8
-        return self.data, self.g, self.adjacency_matrix
+
+        self.make_top_order()
+
+        return self.top_data, self.g, self.adjacency_matrix, self.top_adj_matrix
 
 
     def choose_randomly_intervention_nodes(num_nodes=1, on_child_only=True):
@@ -309,6 +313,19 @@ class DagGenerator:
         intervention_nodes = np.random.choice(self.avail_nodes, num_nodes, replace=False)
 
         return intervention_nodes
+
+    def make_top_order(self):
+        top_order = list(nx.topological_sort(self.g))
+        new_order = []
+        for i in top_order:
+            new_order.append('V{}'.format(i))
+            des = nx.descendants(self.g, i)
+            for j in des:
+                i_index = top_order.index(i)
+                j_index = top_order.index(j)
+                self.top_adj_matrix[i_index,j_index] = 1
+
+        self.top_data = self.data[new_order]
 
 
     def intervene(self, intervention_type="structural", intervention_nodes=None, npoints=None, target_distribution=None):
@@ -362,8 +379,8 @@ class DagGenerator:
             self.generate(npoints)
         else:
             self.generate()
-        return self.data.values, self.g, self.original_adjacency_matrix
 
+        return self.top_data.values, self.g, self.original_adjacency_matrix, self.top_adj_matrix
 
     def to_csv(self, fname_radical, **kwargs):
         """
@@ -386,6 +403,8 @@ class DagGenerator:
         else:
             raise ValueError("Graph has not yet been generated. \
                               Use self.generate() to do so.")
+
+
 
 
     def save_dag_cpdag(self, fname_radical, i_dataset):

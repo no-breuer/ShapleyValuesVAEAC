@@ -139,20 +139,20 @@ def generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_i
             latent_dict = {}
             for intervene_idx in range(latent_dim):
                 dag_copy = copy.deepcopy(dag)
-                df, obj, adj_matrix = dag_copy.intervene(intervention_nodes=[intervene_idx],
+                df, obj, adj_matrix, top_matrix = dag_copy.intervene(intervention_nodes=[intervene_idx],
                                              target_distribution='hard_intervention')
                 latent_dict[intervene_idx] = df
             for idx, intervene_idx in np.ndenumerate(intervention_indices):
                 z[idx, :] = latent_dict[intervene_idx][idx, :]
         else:
-            df, obj, adj_matrix = dag.generate()
+            df, obj, adj_matrix, top_matrix = dag.generate()
             z = df.values[:dataset_size, :]
 
         nx.draw_networkx(obj, arrows=True)
         plt.savefig(base_dir + latent_case + '.jpg')
         plt.clf()
 
-    return z, adj_matrix
+    return z, obj, adj_matrix, top_matrix
 
 
 # TODO: run everything on parser; above code parameters then need to be changed to arg.data_size
@@ -245,17 +245,13 @@ def execute():
             # Generating the latent vector
             if distribution_case == 'observational':
                 y = -1 * np.ones(dataset_size)
-                z, adj_matrix = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=0,
+                z, obj, adj_matrix, top_matrix = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=0,
                                            intervention_indices=y, dag=dag, base_dir=base_dir)
             elif distribution_case == 'interventional':
                 y = np.argmax(np.random.multinomial(1, [1 / latent_dim] * latent_dim, dataset_size), axis=1)
-                z, adj_matrix = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=1,
+                z, obj, adj_matrix, top_matrix = generate_latent_vector(dataset_size, latent_dim, latent_case, intervention_case=1,
                                            intervention_indices=y, dag=dag, base_dir=base_dir)
 
-
-            #print('Latent Z')
-            #print(z.shape)
-            #print(z[:5])
 
             #Transforming the latent via polynomial decoder to dataset
             #print('Data X')
@@ -289,4 +285,4 @@ def execute():
 
     print("Data generation done...")
 
-    return adj_matrix
+    return obj, adj_matrix, top_matrix
