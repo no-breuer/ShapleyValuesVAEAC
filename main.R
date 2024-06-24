@@ -10,19 +10,21 @@ model_config <- yaml.load_file("config/model_config.yaml")
 directory_code <- user_config$directory_code
 directory_python <- user_config$directory_python
 
-seed = model_config$seed
-data_dim = model_config$data_dim
-latent_dim = model_config$latent_dim
-relevant_latents = model_config$relevant_latents
-latent_case = model_config$latent_case
-poly_degree = model_config$poly_degree
+seed <- model_config$seed
+data_dim <- model_config$data_dim
+latent_dim <- model_config$latent_dim
+relevant_latents <- model_config$relevant_latents
+latent_case <- model_config$latent_case
+poly_degree <- model_config$poly_degree
 
-epochs = model_config$epochs
-batch_size = model_config$batch_size
+epochs <- model_config$epochs
+batch_size <- model_config$batch_size
+
+n_samples <- model_config$n_samples
 
 use_python(directory_python)
 
-os = import("os")
+os <- import("os")
 os$chdir(directory_code)
 
 # Load the Python functions from the Python file 'data_generation.py'.
@@ -34,18 +36,29 @@ source("Source_Shapr_VAEAC.R")
 # Set seed
 set.seed(seed)
 
-data_generation_result = execute()
-A = data_generation_result[2]
-top_A = data_generation_result[3]
+data_generation_result <- execute()
+A <- data_generation_result[2]
+top_A <- data_generation_result[3]
 
 np <- import("numpy")
 
-data_dir = paste("data/datasets/seed_", seed, "/intervention/polynomial_latent_", latent_case, "_poly_degree_", poly_degree, "_data_dim_", data_dim, "_latent_dim_", latent_dim, sep = "")
-data_train_x = np$load(paste(data_dir, "/train_x.npy", sep = ""))
-data_train_y = np$load(paste(data_dir, "/train_y.npy", sep = ""))
-data_train = np$load(paste(data_dir, "/train.npy", sep = ""))
+data_dir <- paste("data/datasets/seed_", seed, "/intervention/polynomial_latent_", latent_case, "_poly_degree_", poly_degree, "_data_dim_", data_dim, "_latent_dim_", latent_dim, sep = "")
+data_train_x <- np$load(paste(data_dir, "/train_x.npy", sep = ""))
+data_train_y <- np$load(paste(data_dir, "/train_y.npy", sep = ""))
+data_train <- np$load(paste(data_dir, "/train.npy", sep = ""))
+data_test_x <- np$load(paste(data_dir, "/test_x.npy", sep = ""))
+
+x_column_names <- paste("X", c(1:data_dim), sep = "")
+column_names <- c("Y", x_column_names)
+
+data_train_x <- as.data.frame(data_train_x)
+colnames(data_train_x) <- x_column_names
 
 data_train <- as.data.frame(data_train)
+colnames(data_train) <- column_names
+
+data_test_x <- as.data.frame(data_test_x)
+colnames(data_test_x) <- x_column_names
 
 # linear regression
 model <- lm(formula(data_train), data_train)
@@ -54,7 +67,7 @@ model <- lm(formula(data_train), data_train)
 phi_0 <- mean(data_train_y)
 
 # Prepare the data for explanation.
-explainer <- shapr(data_train, model)
+explainer <- shapr(data_train_x, model)
 #> The specified model provides feature classes that are NA. The classes of data are taken as the truth.
 
 # Train the VAEAC model with specified parameters and add it to the explainer
@@ -75,10 +88,10 @@ explainer_added_vaeac = add_vaeac_to_explainer(
 
 # Compute the Shapley values with respect to feature dependence using
 # the VAEAC_C approach with parameters defined above
-explanation = explain.vaeac(data_train,
+explanation = explain.vaeac(data_test_x,
                             approach = "vaeac",
                             explainer = explainer_added_vaeac,
-                            n_samples = 250L,
+                            n_samples = n_samples,
                             prediction_zero = phi_0,
                             which_vaeac_model = "best")
 

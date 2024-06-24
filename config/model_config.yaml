@@ -12,3 +12,6 @@ test_size: 500
 epochs: 30
 batch_size: 64
 
+# explanation
+n_samples: 25
+
