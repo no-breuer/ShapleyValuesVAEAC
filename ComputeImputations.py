@@ -918,6 +918,8 @@ def VAEAC_impute_values(instances_to_impute,
                         num_imputations,
                         use_cuda,
                         one_hot_max_sizes,
+                        A,
+                        relevant_latents,
                         use_skip_connections=True,
                         verbose=False
                         ):
@@ -986,9 +988,11 @@ def VAEAC_impute_values(instances_to_impute,
     checkpoint = torch.load(path_VAEAC_model)
     # checkpoint = torch.load("/Users/larsolsen/PhD/Paper1/ShapleyValuesBurr/VAEAC_models/burr_ntrain_100_repetition_19_width_32_depth_3_k_1000_lr_7e-04_without_skip_p_10_param_2.0_n_100_depth_3_width_32_latent_8_lr_0.0007_best.pt")
 
+    # print("keys: " + str(checkpoint['model_state_dict'].keys()))
+
     if use_skip_connections:
         # Extract some of the parameters based on the dimensions of the networks
-        depth = int(list(checkpoint['model_state_dict'].keys())[-1].split(".")[1]) - 4
+        depth = int(list(checkpoint['model_state_dict'].keys())[-10].split(".")[1]) - 4
         width, latent_dim = checkpoint['model_state_dict']['generative_network.0.weight'].shape
         lr = checkpoint['optimizer_state_dict']['param_groups'][0]['lr']
 
@@ -1002,7 +1006,7 @@ def VAEAC_impute_values(instances_to_impute,
                                            lr=lr)
     else:
         # Extract some of the parameters based on the dimensions of the networks
-        depth = int(list(checkpoint['model_state_dict'].keys())[-1].split(".")[1]) - 5
+        depth = int(list(checkpoint['model_state_dict'].keys())[-10].split(".")[1]) - 5
         width, latent_dim = checkpoint['model_state_dict']['generative_network.0.weight'].shape
         lr = checkpoint['optimizer_state_dict']['param_groups'][0]['lr']
 
@@ -1021,7 +1025,9 @@ def VAEAC_impute_values(instances_to_impute,
         networks['reconstruction_log_prob'],
         networks['proposal_network'],
         networks['prior_network'],
-        networks['generative_network']
+        networks['generative_network'],
+        relevant_latents,
+        A,
     )
 
     # Send the model to the GPU, if we are supposed to.

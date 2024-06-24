@@ -7,15 +7,19 @@ library(shapr)
 # Library needed for doing data manipulations
 library(abind)
 
+library(yaml)
+
+user_config <- yaml.load_file("config/user_config.yaml")
+
 # User need to specify the path of the folder where
 # the user downloaded the GitHub Repository.
 # In RStudio one can use 'dirname(rstudioapi::getSourceEditorContext()$path)'.
-directory_code = "USER_MUST_SET_PATH_TO_DIRECTORY_WHERE_GitHub_REPOSITORY_IS_STORED"
+directory_code <- user_config$directory_code
 
 # The path to where the python build is saved.
 # Often something along "/usr/local/bin/python3.6.4",
 # depending on operating system.
-directory_python = "USER_MUST_SET_PATH_TO_DIRECTORY_WHERE_PYTHON_IS_STORED"
+directory_python <- user_config$directory_python
 
 ###############################################################
 ##### INITIATE CONNECTION TO PYTHON BY RETICULATE LIBRARY #####
@@ -90,6 +94,8 @@ add_vaeac_to_explainer = function(explainer,
                                   use_skip_connections = TRUE,
                                   mask_generator_only_these_coalitions=NULL,
                                   mask_generator_only_these_coalitions_probabilities=NULL,
+                                  A,
+                                  relevant_latents,
                                   verbose = FALSE,
                                   verbose_init = FALSE,
                                   verbose_summary = FALSE,
@@ -217,6 +223,8 @@ add_vaeac_to_explainer = function(explainer,
                             param_now = param_now,
                             path_to_save_model = path_to_save_model,
                             one_hot_max_sizes = one_hot_max_sizes,
+                            A=A,
+                            relevant_latents=relevant_latents,
                             use_cuda = use_cuda,
                             epochs = epochs,
                             num_different_vaeac_initiate = num_different_vaeac_initiate,
@@ -488,6 +496,8 @@ prepare_data.vaeac = function(explainer, seed = 1996, n_samples = 1e3L, index_fe
                                                  num_imputations = as.integer(n_samples),
                                                  use_cuda = explainer$VAEAC$parameters$use_cuda,
                                                  one_hot_max_sizes = explainer$VAEAC$parameters$one_hot_max_sizes,
+                                                 A=A,
+                                                 relevant_latents=relevant_latents,
                                                  use_skip_connections = explainer$VAEAC$parameters$use_skip_connections,
                                                  verbose = explainer$VAEAC$parameters$verbose_summary)
     # The VAEAC_conditional_data object is a 3D array with the shape
