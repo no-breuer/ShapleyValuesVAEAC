@@ -36,6 +36,7 @@ from datasets2 import compute_normalization
 from train_utils import extend_batch, get_validation_iwae
 from VAEAC import VAEAC
 
+import re
 
 # %%
 def train_VAEAC_model(data_train,
@@ -988,11 +989,13 @@ def VAEAC_impute_values(instances_to_impute,
     checkpoint = torch.load(path_VAEAC_model)
     # checkpoint = torch.load("/Users/larsolsen/PhD/Paper1/ShapleyValuesBurr/VAEAC_models/burr_ntrain_100_repetition_19_width_32_depth_3_k_1000_lr_7e-04_without_skip_p_10_param_2.0_n_100_depth_3_width_32_latent_8_lr_0.0007_best.pt")
 
-    # print("keys: " + str(checkpoint['model_state_dict'].keys()))
+    keys = list(checkpoint['model_state_dict'].keys())
+    e = re.compile('^generative_network..+.weight')
+    depth = [key for key in keys if e.match(key)][-1]
 
     if use_skip_connections:
         # Extract some of the parameters based on the dimensions of the networks
-        depth = int(list(checkpoint['model_state_dict'].keys())[-10].split(".")[1]) - 4
+        depth = int(depth.split(".")[1]) - 4
         width, latent_dim = checkpoint['model_state_dict']['generative_network.0.weight'].shape
         lr = checkpoint['optimizer_state_dict']['param_groups'][0]['lr']
 
@@ -1006,7 +1009,7 @@ def VAEAC_impute_values(instances_to_impute,
                                            lr=lr)
     else:
         # Extract some of the parameters based on the dimensions of the networks
-        depth = int(list(checkpoint['model_state_dict'].keys())[-10].split(".")[1]) - 5
+        depth = int(depth.split(".")[1]) - 5
         width, latent_dim = checkpoint['model_state_dict']['generative_network.0.weight'].shape
         lr = checkpoint['optimizer_state_dict']['param_groups'][0]['lr']
 

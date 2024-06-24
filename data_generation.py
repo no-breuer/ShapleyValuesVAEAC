@@ -27,6 +27,8 @@ from scipy.stats import bernoulli
 # Import DAG generator from Diviyan Kalainathan
 from dag_generator import DagGenerator
 
+import yaml
+
 
 def compute_kronecker_product(degree, latent):
     if degree == 0:
@@ -190,13 +192,17 @@ def execute():
     Is called in main function now. Maybe later change back to no function
     """
     # Initilaize arguments (TODO: translate into parser env)
-    seed = 0
-    data_dim = 10
-    latent_dim = 4
-    latent_case = 'scm_dense'
-    poly_degree = 2
-    train_size = 100
-    test_size = 100
+
+    config_file = open('config/model_config.yaml', 'r')
+    config_service = yaml.safe_load(config_file)
+
+    seed = config_service['seed']
+    data_dim = config_service['data_dim']
+    latent_dim = config_service['latent_dim']
+    latent_case = config_service['latent_case']
+    poly_degree = config_service['poly_degree']
+    train_size = config_service['train_size']
+    test_size = config_service['test_size']
 
     poly_size = compute_total_polynomial_terms(poly_degree, latent_dim)
     print('Total Polynomial Terms: ', poly_size)

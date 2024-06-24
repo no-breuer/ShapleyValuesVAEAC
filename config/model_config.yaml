@@ -1,0 +1,14 @@
+# data
+seed: 0
+data_dim: 6
+latent_dim: 4
+relevant_latents: 4
+latent_case: "scm_dense"
+poly_degree: 2
+train_size: 500
+test_size: 500
+
+# training
+epochs: 30
+batch_size: 64
+
