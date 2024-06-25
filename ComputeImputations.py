@@ -672,6 +672,7 @@ def train_VAEAC_model(data_train,
                  ), file=stderr, flush=True)
 
     print(model.scm.A_given)
+    print(model.scm.A)
     ax = sns.heatmap(model.scm.A.detach().numpy(), linewidth=0.5)
     plt.show()
     return filename_best, filename_best_running, filename_last, \

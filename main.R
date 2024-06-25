@@ -73,6 +73,8 @@ phi_0 <- mean(data_train_y)
 explainer <- shapr(data_train_x, model)
 #> The specified model provides feature classes that are NA. The classes of data are taken as the truth.
 
+dir.create("models", showWarnings = FALSE)
+
 # Train the VAEAC model with specified parameters and add it to the explainer
 explainer_added_vaeac = add_vaeac_to_explainer(
   explainer,
@@ -87,6 +89,7 @@ explainer_added_vaeac = add_vaeac_to_explainer(
   validation_iwae_num_samples = 25L,
   A=top_A,
   relevant_latents=relevant_latents,
+  path_to_save_model = "models/",
   verbose_summary = TRUE)
 
 # Compute the Shapley values with respect to feature dependence using
@@ -106,13 +109,18 @@ options(width=200)
 
 print(shapley_values, n=Inf)
 
-result_file_name = paste(seed, "_polynomial_latent_", latent_case, "_poly_degree_", poly_degree, "_data_dim_", data_dim, "_latent_dim_", latent_dim, "_use_fixed_A_", use_fixed_A, "_shapley_values.txt", sep = "")
-file.create(result_file_name)
-sink(result_file_name)
+dir.create("results", showWarnings = FALSE)
+result_file_name = paste("results/", seed, "_polynomial_latent_", latent_case, "_poly_degree_", poly_degree, "_data_dim_", data_dim, "_latent_dim_", latent_dim, "_use_fixed_A_", use_fixed_A, "_shapley_values", sep = "")
+
+result_text_file_name = paste(result_file_name, ".txt", sep = "")
+file.create(result_text_file_name)
+sink(result_text_file_name)
 print(shapley_values, n=Inf)
 sink()
 
 # Finally, we plot the resulting explanations.
-png("main_results.png", res = 150, height = 1000, width = 1250)
-plot(explanation, plot_phi0 = FALSE)
+result_image_file_name = paste(result_file_name, ".png", sep = "")
+file.create(result_image_file_name)
+png(result_image_file_name, , res = 150, height = 2000, width = 2000)
+plot(explanation, plot_phi0 = FALSE, index_x_test = c(1:10))
 dev.off()

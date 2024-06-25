@@ -1,6 +1,6 @@
 # data
 seed: 0
-data_dim: 6
+data_dim: 10
 latent_dim: 4
 relevant_latents: 4
 latent_case: "scm_dense"
