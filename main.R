@@ -19,6 +19,7 @@ poly_degree <- model_config$poly_degree
 
 epochs <- model_config$epochs
 batch_size <- model_config$batch_size
+use_fixed_A <- model_config$use_fixed_A
 
 n_samples <- model_config$n_samples
 
@@ -38,7 +39,9 @@ set.seed(seed)
 
 data_generation_result <- execute()
 A <- data_generation_result[2]
+A <- as.matrix(as.data.frame(A))
 top_A <- data_generation_result[3]
+top_A <- as.matrix(as.data.frame(top_A))
 
 np <- import("numpy")
 
@@ -103,7 +106,7 @@ options(width=200)
 
 print(shapley_values, n=Inf)
 
-result_file_name = paste(seed, "_polynomial_latent_", latent_case, "_poly_degree_", poly_degree, "_data_dim_", data_dim, "_latent_dim_", latent_dim, "_shapley_values.txt", sep = "")
+result_file_name = paste(seed, "_polynomial_latent_", latent_case, "_poly_degree_", poly_degree, "_data_dim_", data_dim, "_latent_dim_", latent_dim, "_use_fixed_A_", use_fixed_A, "_shapley_values.txt", sep = "")
 file.create(result_file_name)
 sink(result_file_name)
 print(shapley_values, n=Inf)

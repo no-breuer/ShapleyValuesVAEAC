@@ -11,6 +11,7 @@ test_size: 500
 # training
 epochs: 30
 batch_size: 64
+use_fixed_A: False
 
 # explanation
 n_samples: 25

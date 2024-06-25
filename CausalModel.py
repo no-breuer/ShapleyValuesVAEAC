@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.nn.functional import softplus, softmax
 import numpy as np
+import yaml
 
 
 class InvertiblePriorLinear(nn.Module):
@@ -101,7 +102,13 @@ class SCM(nn.Module):
         self.d = d
         self.A_given = A
         self.A_fix_idx = A == 0
-        self.A = nn.Parameter(torch.zeros(d, d))
+
+        config_file = open('config/model_config.yaml', 'r')
+        config_service = yaml.safe_load(config_file)
+
+        use_fixed_A = config_service['use_fixed_A']
+
+        self.A = nn.Parameter(torch.zeros(d, d)) if not use_fixed_A else torch.tensor(A, dtype=torch.float32)
 
         # Elementwise nonlinear mappings
         if scm_type == 'linscm':
