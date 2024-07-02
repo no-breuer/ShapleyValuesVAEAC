@@ -19,6 +19,7 @@ poly_degree <- model_config$poly_degree
 
 epochs <- model_config$epochs
 batch_size <- model_config$batch_size
+use_scm <- model_config$use_scm
 use_fixed_A <- model_config$use_fixed_A
 
 n_samples <- model_config$n_samples
@@ -110,7 +111,12 @@ options(width=200)
 print(shapley_values, n=Inf)
 
 dir.create("results", showWarnings = FALSE)
-result_file_name = paste("results/", seed, "_polynomial_latent_", latent_case, "_poly_degree_", poly_degree, "_data_dim_", data_dim, "_latent_dim_", latent_dim, "_use_fixed_A_", use_fixed_A, "_shapley_values", sep = "")
+result_file_name_prefix = paste("results/", seed, "_polynomial_latent_", latent_case, "_poly_degree_", poly_degree, "_data_dim_", data_dim, "_latent_dim_", latent_dim, "_use_scm_", use_scm,  sep = "")
+
+if (use_scm) {
+  result_file_name_prefix = paste(result_file_name_prefix, "_use_fixed_A_", use_fixed_A, sep = "")
+}
+result_file_name = paste(result_file_name_prefix, "_shapley_values", sep = "")
 
 result_text_file_name = paste(result_file_name, ".txt", sep = "")
 file.create(result_text_file_name)

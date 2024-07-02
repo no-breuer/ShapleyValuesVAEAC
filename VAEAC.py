@@ -68,7 +68,71 @@ class VAEAC(Module):
 
         return observed
 
+
     def make_latent_distributions(self, batch, mask, no_proposal=False):
+        config_file = open('config/model_config.yaml', 'r')
+        config_service = yaml.safe_load(config_file)
+        use_scm = config_service['use_scm']
+
+        if use_scm:
+            return self.make_latent_distributions_scm(batch, mask, no_proposal)
+
+        # Start by creating the observed values where the masked is applied
+        # such that the masked values are 0.
+        observed = self.make_observed(batch, mask)
+
+        # NOT COMPLETELY SURE WHAT NO_PROPOSAL MEANS
+        # it is when we are not interested in the normal distribution
+        # of the latent space computed based on the proposal network
+        # Used when we just want to generate new samples based only on the prior.
+        if no_proposal:
+            proposal = None
+
+        else:
+            # Default to go in here
+
+            # Create the full_info, which is the concatenated version
+            # of the batch and mask. So we colbind them together.
+            # Batch and mask have same shape: batch_size x sum(one_hot_max_sizes)
+            # Which is batch_size x num_feature for the continuous case.
+            # full_info have dimensions  batch_size x 2*sum(one_hot_max_sizes)
+            # THIS IS A DEEP COPY
+            full_info = torch.cat([batch, mask], 1)
+
+            # Send the full_information through the proposal network
+            # the encoder. It needs the full information to know if a
+            # value is missing or just masked.
+            # We get out a matrix of size: batch_size x 64*2
+            # where 64 is the dimension of the latent space.
+            # For each dimension we get a mean mu and a sd sigma.
+            # the first 64 values are the mus and the last
+            # 64 are the softplus of the sigmas, so it can take on any value.
+            # softplus(x) = ln(1+e^{x})
+            proposal_params = self.proposal_network(full_info)
+
+            # Takes the proposal_parameters and returns a normal distribution,
+            # which is component-wise independent.
+            # If sigma (after softmax transform) is less than 1e-3,
+            # then we set sigma to this value.
+            proposal = normal_parse_params(proposal_params, 1e-3)
+
+        # The we compute the normal parameters of the prior network
+        # i.e., the third network that we are interested in
+        # the one that computes the conditional dist where some
+        # of the features are masked.
+        # So instead of sending in the batch values/the truth
+        # we send in the observed values and the mask.
+        prior_params = self.prior_network(torch.cat([observed, mask], 1))
+
+        # Create the normal distribution based on the parameters
+        # (mu, sigma) from the prior_network
+        prior = normal_parse_params(prior_params, 1e-3)
+
+        # Return the two multivariate normal distributions.
+        return proposal, prior
+
+
+    def make_latent_distributions_scm(self, batch, mask, no_proposal=False):
         """
         Make latent distributions for the given batch and mask.
         No no_proposal is True, return None instead of proposal distribution.
@@ -155,6 +219,7 @@ class VAEAC(Module):
         causal_prior = normal_parse_params(causal_prior_params, 1e-3)
 
         return causal_proposal, causal_prior
+
 
     def prior_regularization(self, prior):
         """

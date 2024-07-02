@@ -11,7 +11,11 @@ test_size: 500
 # training
 epochs: 30
 batch_size: 64
-use_fixed_A: False
+use_scm: True
+
+# scm specific
+# use_z:
+use_fixed_A: True
 
 # explanation
 n_samples: 25

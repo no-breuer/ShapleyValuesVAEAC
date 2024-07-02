@@ -279,19 +279,21 @@ def train_VAEAC_model(data_train,
         # 'vlb_scale_factor' is not defined, return "1". This should not
         # be necessary for us.
 
-        # Load parameter for SCM optimization
-        scm_param = list(model.scm.parameters())
-
         config_file = open('config/model_config.yaml', 'r')
         config_service = yaml.safe_load(config_file)
+        use_scm = config_service['use_scm']
 
-        use_fixed_A = config_service['use_fixed_A']
-        learn_A = not use_fixed_A
+        if use_scm:
+            # Load parameter for SCM optimization
+            scm_param = list(model.scm.parameters())
 
-        if learn_A:
-            A_optimizer = optim.Adam(scm_param[0:1], lr=1e-3)  # learning rate als config file
-            prior_optimizer = optim.Adam(scm_param[1:], lr=5e-5, betas=(0.0, 0.999))  # learning rate als congif file
-            # und betas
+            use_fixed_A = config_service['use_fixed_A']
+            learn_A = not use_fixed_A
+
+            if learn_A:
+                A_optimizer = optim.Adam(scm_param[0:1], lr=1e-3)  # learning rate als config file
+                prior_optimizer = optim.Adam(scm_param[1:], lr=5e-5, betas=(0.0, 0.999))  # learning rate als congif file
+                # und betas
 
         # A list of validation IWAE estimates
         validation_iwae = []
@@ -353,7 +355,7 @@ def train_VAEAC_model(data_train,
 
                 # Set previous gradients to zero
                 optimizer.zero_grad()
-                if learn_A:
+                if use_scm and learn_A:
                     A_optimizer.zero_grad()
                     prior_optimizer.zero_grad()
 
@@ -365,7 +367,7 @@ def train_VAEAC_model(data_train,
 
                 # Update the model parameters by using ADAM.
                 optimizer.step()
-                if learn_A:
+                if use_scm and learn_A:
                     A_optimizer.step()
                     prior_optimizer.step()
 
@@ -573,7 +575,7 @@ def train_VAEAC_model(data_train,
             # do backpropragation because PyTorch accumulates the gradients
             # on subsequent backward passes
             optimizer.zero_grad()
-            if learn_A:
+            if use_scm and learn_A:
                 A_optimizer.zero_grad()
                 prior_optimizer.zero_grad()
 
@@ -600,7 +602,7 @@ def train_VAEAC_model(data_train,
             # based on the current gradient (stored in .grad attribute of a parameter)
             # That is, for the proposal (encoder), the generative (decoder) and prior network.
             optimizer.step()
-            if learn_A:
+            if use_scm and learn_A:
                 A_optimizer.step()
                 prior_optimizer.step()
 
@@ -671,10 +673,11 @@ def train_VAEAC_model(data_train,
                  last_state['validation_iwae_running_avg'][-1]
                  ), file=stderr, flush=True)
 
-    print(model.scm.A_given)
-    print(model.scm.A)
-    ax = sns.heatmap(model.scm.A.detach().numpy(), linewidth=0.5)
-    plt.show()
+    if use_scm:
+        print(model.scm.A_given)
+        print(model.scm.A)
+        ax = sns.heatmap(model.scm.A.detach().numpy(), linewidth=0.5)
+        plt.show()
     return filename_best, filename_best_running, filename_last, \
            np.array(train_vlb), np.array(validation_iwae), \
            np.array(validation_iwae_running_avg), model.scm.A, model.scm.A_given
